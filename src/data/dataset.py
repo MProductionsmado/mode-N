@@ -145,8 +145,8 @@ class MinecraftSchematicDataset(Dataset):
             if torch.rand(1) > 0.5:
                 voxels_onehot = torch.flip(voxels_onehot, dims=[3])
         
-        # Get text embedding - clone to ensure we have our own storage
-        text_embedding = torch.from_numpy(item['text_embedding']).float().clone()
+        # Get text embedding - copy array to ensure we have our own storage
+        text_embedding = torch.from_numpy(np.array(item['text_embedding']).copy()).float()
         
         # Size as categorical
         size_map = {'normal': 0, 'big': 1, 'huge': 2}
