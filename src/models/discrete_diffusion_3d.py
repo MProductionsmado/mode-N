@@ -319,10 +319,10 @@ class DiscreteDiscreteDiffusionModel3D(nn.Module):
                     c // config['model']['encoder']['channels'][0] 
                     for c in config['model']['encoder']['channels']
                 ),
-                num_res_blocks=config['model']['encoder']['num_res_blocks'],
+                num_res_blocks=config['model']['diffusion']['num_res_blocks'],
                 cond_dim=cond_dim,
                 attention_levels=tuple(config['model']['diffusion']['attention_levels']),
-                dropout=config['model']['encoder']['dropout']
+                dropout=config['model']['diffusion']['dropout']
             )
         
         # Transition matrix schedule (probability of staying in same state)
