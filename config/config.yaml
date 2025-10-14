@@ -51,14 +51,14 @@ model:
 # Training Settings
 training:
   batch_size: 8  # Reduced for diffusion (UNet uses much more memory than VAE)
-  num_epochs: 200  # Diffusion converges faster than VAE
-  learning_rate: 0.0001  # Lower LR for stable diffusion training
+  num_epochs: 300  # INCREASED: More epochs for better spatial learning
+  learning_rate: 0.00005  # REDUCED: Slower learning for better long-range patterns (was 0.0001)
   weight_decay: 0.00001
   
   # Optimizer
   optimizer: "adam"
   scheduler: "cosine"
-  warmup_epochs: 5  # Reduced from 10 to 5 for faster initial learning
+  warmup_epochs: 10  # INCREASED: Gradual warmup for stable slow learning
   
   # Checkpointing
   save_every_n_epochs: 50
@@ -67,7 +67,7 @@ training:
   # Early stopping
   early_stopping:
     enabled: true
-    patience: 50
+    patience: 75  # INCREASED: More patience for slower learning (was 50)
     monitor: "val/loss"
     
   # Logging
