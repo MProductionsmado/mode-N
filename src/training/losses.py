@@ -16,7 +16,8 @@ class VAELoss(nn.Module):
         reconstruction_weight: float = 1.0,
         kl_weight: float = 0.5,
         kl_annealing: bool = True,
-        kl_annealing_epochs: int = 50
+        kl_annealing_epochs: int = 50,
+        class_weights: torch.Tensor = None
     ):
         """
         Args:
@@ -31,6 +32,7 @@ class VAELoss(nn.Module):
         self.kl_weight = kl_weight
         self.kl_annealing = kl_annealing
         self.kl_annealing_epochs = kl_annealing_epochs
+        self.class_weights = class_weights
         
         self.current_epoch = 0
     
@@ -65,8 +67,13 @@ class VAELoss(nn.Module):
         # Convert target from one-hot to class indices
         target_indices = torch.argmax(target, dim=1)
         
-        # Cross-entropy loss
-        loss = F.cross_entropy(recon, target_indices, reduction='mean')
+        # Cross-entropy loss with class weights
+        loss = F.cross_entropy(
+            recon, 
+            target_indices, 
+            weight=self.class_weights,
+            reduction='mean'
+        )
         
         return loss
     

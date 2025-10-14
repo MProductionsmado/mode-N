@@ -33,12 +33,19 @@ class VAELightningModule(pl.LightningModule):
         # Create model
         self.model = ConditionalVAE3D(config)
         
+        # Compute class weights (inverse frequency, with Air downweighted heavily)
+        num_classes = len(config['blocks'])
+        class_weights = torch.ones(num_classes)
+        class_weights[0] = 0.1  # Air gets very low weight (10% of others)
+        # All other blocks get weight 1.0
+        
         # Create loss
         self.loss_fn = VAELoss(
             reconstruction_weight=1.0,
             kl_weight=config['model']['vae']['beta'],
             kl_annealing=config['model']['vae'].get('kl_annealing', True),
-            kl_annealing_epochs=config['model']['vae'].get('kl_annealing_epochs', 50)
+            kl_annealing_epochs=config['model']['vae'].get('kl_annealing_epochs', 50),
+            class_weights=class_weights
         )
         
         # Metrics
