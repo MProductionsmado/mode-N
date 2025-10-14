@@ -112,8 +112,8 @@ class MinecraftSchematicDataset(Dataset):
         voxel_file = self.data_dir / item['voxel_file']
         voxels = np.load(voxel_file)
         
-        # Convert to tensor - use .clone() to ensure we have our own storage
-        voxels = torch.from_numpy(voxels).long().clone()
+        # Convert to tensor - copy to ensure we have our own storage
+        voxels = torch.from_numpy(voxels.copy()).long()
         
         # One-hot encode
         voxels_onehot = torch.nn.functional.one_hot(
