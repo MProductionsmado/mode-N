@@ -14,7 +14,7 @@ from datetime import datetime
 import torch
 from torch.utils.data import DataLoader
 
-from src.data.dataset import MinecraftDataset
+from src.data.dataset import MinecraftSchematicDataset
 from src.training.trainer_discrete_diffusion import DiscreteDiffusionLightningModule, create_trainer
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -38,12 +38,12 @@ def main():
     
     # Create datasets
     logger.info("Creating datasets...")
-    train_dataset = MinecraftDataset(
+    train_dataset = MinecraftSchematicDataset(
         data_dir=config['data']['processed_dir'],
         split='train'
     )
     
-    val_dataset = MinecraftDataset(
+    val_dataset = MinecraftSchematicDataset(
         data_dir=config['data']['processed_dir'],
         split='val'
     )
