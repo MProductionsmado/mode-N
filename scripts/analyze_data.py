@@ -17,13 +17,20 @@ import yaml
 with open('config/config.yaml') as f:
     config = yaml.safe_load(f)
 
-# Load metadata
+# Try to load metadata, if not available, scan directory
 metadata_path = Path('out/metadata.json')
-with open(metadata_path) as f:
-    metadata = json.load(f)
-
-print(f"Total schematics: {len(metadata)}")
-print(f"Size distribution: {Counter([m['size_name'] for m in metadata])}")
+if metadata_path.exists():
+    print("Loading metadata from preprocessing...")
+    with open(metadata_path) as f:
+        metadata = json.load(f)
+    print(f"Total schematics: {len(metadata)}")
+    print(f"Size distribution: {Counter([m['size_name'] for m in metadata])}")
+else:
+    print("Metadata not found, scanning directory for .schem files...")
+    schem_files = list(Path('out').glob('*.schem'))
+    print(f"Found {len(schem_files)} .schem files")
+    # Create simple metadata
+    metadata = [{'filename': f.name} for f in schem_files]
 
 # Sample analysis
 parser = SchematicParser(config['blocks'])
