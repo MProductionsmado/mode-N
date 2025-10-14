@@ -7,7 +7,11 @@ import yaml
 from pathlib import Path
 import logging
 import sys
+import os
 import torch
+
+# Suppress tokenizers parallelism warning
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 # Add parent directory to path
 sys.path.append(str(Path(__file__).parent.parent))

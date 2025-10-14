@@ -68,13 +68,16 @@ class VAELightningModule(pl.LightningModule):
         accuracy = self.accuracy_metric(recon, voxels)
         non_air_acc = self.non_air_accuracy(recon, voxels)
         
+        # Get batch size for logging
+        batch_size = voxels.size(0)
+        
         # Log metrics
-        self.log('train/loss', loss_dict['loss'], on_step=True, on_epoch=True, prog_bar=True)
-        self.log('train/recon_loss', loss_dict['recon_loss'], on_step=False, on_epoch=True)
-        self.log('train/kl_loss', loss_dict['kl_loss'], on_step=False, on_epoch=True)
-        self.log('train/kl_weight', loss_dict['kl_weight'], on_step=False, on_epoch=True)
-        self.log('train/accuracy', accuracy, on_step=False, on_epoch=True, prog_bar=True)
-        self.log('train/non_air_accuracy', non_air_acc, on_step=False, on_epoch=True)
+        self.log('train/loss', loss_dict['loss'], on_step=True, on_epoch=True, prog_bar=True, batch_size=batch_size)
+        self.log('train/recon_loss', loss_dict['recon_loss'], on_step=False, on_epoch=True, batch_size=batch_size)
+        self.log('train/kl_loss', loss_dict['kl_loss'], on_step=False, on_epoch=True, batch_size=batch_size)
+        self.log('train/kl_weight', loss_dict['kl_weight'], on_step=False, on_epoch=True, batch_size=batch_size)
+        self.log('train/accuracy', accuracy, on_step=False, on_epoch=True, prog_bar=True, batch_size=batch_size)
+        self.log('train/non_air_accuracy', non_air_acc, on_step=False, on_epoch=True, batch_size=batch_size)
         
         return loss
     
@@ -95,12 +98,15 @@ class VAELightningModule(pl.LightningModule):
         accuracy = self.accuracy_metric(recon, voxels)
         non_air_acc = self.non_air_accuracy(recon, voxels)
         
+        # Get batch size for logging
+        batch_size = voxels.size(0)
+        
         # Log metrics
-        self.log('val/loss', loss_dict['loss'], on_step=False, on_epoch=True, prog_bar=True)
-        self.log('val/recon_loss', loss_dict['recon_loss'], on_step=False, on_epoch=True)
-        self.log('val/kl_loss', loss_dict['kl_loss'], on_step=False, on_epoch=True)
-        self.log('val/accuracy', accuracy, on_step=False, on_epoch=True, prog_bar=True)
-        self.log('val/non_air_accuracy', non_air_acc, on_step=False, on_epoch=True)
+        self.log('val/loss', loss_dict['loss'], on_step=False, on_epoch=True, prog_bar=True, batch_size=batch_size)
+        self.log('val/recon_loss', loss_dict['recon_loss'], on_step=False, on_epoch=True, batch_size=batch_size)
+        self.log('val/kl_loss', loss_dict['kl_loss'], on_step=False, on_epoch=True, batch_size=batch_size)
+        self.log('val/accuracy', accuracy, on_step=False, on_epoch=True, prog_bar=True, batch_size=batch_size)
+        self.log('val/non_air_accuracy', non_air_acc, on_step=False, on_epoch=True, batch_size=batch_size)
         
         return loss
     
