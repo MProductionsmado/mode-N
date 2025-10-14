@@ -50,7 +50,7 @@ model:
 
 # Training Settings
 training:
-  batch_size: 16  # Reduced for diffusion (needs more memory per step)
+  batch_size: 8  # Reduced for diffusion (UNet uses much more memory than VAE)
   num_epochs: 200  # Diffusion converges faster than VAE
   learning_rate: 0.0001  # Lower LR for stable diffusion training
   weight_decay: 0.00001
