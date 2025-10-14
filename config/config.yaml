@@ -51,9 +51,9 @@ model:
 
 # Training Settings
 training:
-  batch_size: 16
+  batch_size: 24
   num_epochs: 200
-  learning_rate: 0.0001
+  learning_rate: 0.0002
   weight_decay: 0.00001
   
   # Optimizer
@@ -84,7 +84,7 @@ generation:
 # Hardware
 hardware:
   device: "cuda"  # cuda or cpu
-  num_workers: 0  # Set to 0 on Windows to avoid multiprocessing issues
+  num_workers: 8  # Data loading workers (0 for main process only)
   precision: 16  # 16 for mixed precision, 32 for full precision
   
 # Block vocabulary (most common Minecraft blocks in nature assets)
