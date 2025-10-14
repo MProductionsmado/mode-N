@@ -69,7 +69,7 @@ training:
   early_stopping:
     enabled: true
     patience: 20
-    monitor: "val_loss"
+    monitor: "val/loss"
     
   # Logging
   log_dir: "logs"

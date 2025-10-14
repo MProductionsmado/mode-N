@@ -56,39 +56,10 @@ class VAELightningModule(pl.LightningModule):
         
         # Get size_name - verify all are the same
         size_names = batch['size_name']
-        unique_sizes = set(size_names)
-        if len(unique_sizes) > 1:
-            raise ValueError(f"Mixed sizes in training batch: {unique_sizes}")
         size_name = size_names[0]
-        
-        # DEBUG: Check if size_name matches actual voxel dimensions
-        actual_shape = voxels.shape  # (B, C, D, H, W)
-        expected_shapes = {
-            'normal': (16, 16, 16),
-            'big': (16, 32, 16),
-            'huge': (24, 64, 24)
-        }
-        expected = expected_shapes[size_name]
-        actual = tuple(actual_shape[2:])  # Skip batch and channel dimensions, convert to tuple
-        
-        if actual != expected:
-            raise ValueError(
-                f"Size mismatch! size_name='{size_name}' expects {expected} "
-                f"but voxels have shape {actual_shape} (spatial: {actual}). "
-                f"Batch has {len(size_names)} samples, all marked as '{size_name}'"
-            )
         
         # Forward pass
         recon, mu, logvar = self(voxels, text_emb, size_name)
-        
-        # DEBUG: Verify reconstruction shape matches input
-        if recon.shape != voxels.shape:
-            raise ValueError(
-                f"❌ Reconstruction shape mismatch! "
-                f"Input voxels: {voxels.shape}, "
-                f"Reconstruction: {recon.shape}, "
-                f"size_name: '{size_name}'"
-            )
         
         # Calculate loss
         loss, loss_dict = self.loss_fn(recon, voxels, mu, logvar)
@@ -111,12 +82,7 @@ class VAELightningModule(pl.LightningModule):
         """Validation step"""
         voxels = batch['voxels']
         text_emb = batch['text_embedding']
-        
-        # Get size_name - verify all are the same
         size_names = batch['size_name']
-        unique_sizes = set(size_names)
-        if len(unique_sizes) > 1:
-            raise ValueError(f"Mixed sizes in validation batch: {unique_sizes}")
         size_name = size_names[0]
         
         # Forward pass

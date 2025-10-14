@@ -247,43 +247,7 @@ class VoxelAugmentation(nn.Module):
         return voxels
 
 
-def debug_collate(batch):
-    """
-    Debug collate function that checks if all samples have the same size
-    """
-    # Check sizes
-    sizes = [item['size_name'] for item in batch]
-    voxel_shapes = [item['voxels'].shape for item in batch]
-    
-    # Log first few batches
-    import random
-    if random.random() < 0.01:  # Log 1% of batches
-        logger.info(f"Batch contains {len(batch)} samples")
-        logger.info(f"Sizes: {set(sizes)} (count: {len(sizes)})")
-        logger.info(f"Unique voxel shapes: {set(voxel_shapes)}")
-    
-    if len(set(sizes)) > 1:
-        logger.error(f"❌ Mixed sizes in batch! Sizes: {sizes}")
-        logger.error(f"Voxel shapes: {voxel_shapes}")
-        raise ValueError(f"Mixed sizes in batch: {set(sizes)}")
-    
-    if len(set(voxel_shapes)) > 1:
-        logger.error(f"❌ Mixed voxel shapes in batch! Shapes: {voxel_shapes}")
-        logger.error(f"Sizes: {sizes}")
-        raise ValueError(f"Mixed voxel shapes in batch: {set(voxel_shapes)}")
-    
-    # Default collate
-    from torch.utils.data.dataloader import default_collate
-    result = default_collate(batch)
-    
-    # Verify the collated result
-    if 'size_name' in result:
-        unique_sizes = set(result['size_name'])
-        if len(unique_sizes) > 1:
-            logger.error(f"❌ After collation, multiple sizes: {unique_sizes}")
-            raise ValueError(f"Multiple sizes after collation: {unique_sizes}")
-    
-    return result
+
 
 
 class SizeGroupedBatchSampler:
@@ -409,15 +373,14 @@ def create_dataloaders(
         drop_last=False
     )
     
-    # Create dataloaders with batch samplers and debug collate
+    # Create dataloaders with batch samplers
     # Note: When using batch_sampler, we don't specify batch_size, shuffle, or drop_last
     train_loader = DataLoader(
         train_dataset,
         batch_sampler=train_batch_sampler,
         num_workers=num_workers,
         pin_memory=use_pin_memory,
-        persistent_workers=True if num_workers > 0 else False,
-        collate_fn=debug_collate
+        persistent_workers=True if num_workers > 0 else False
     )
     
     val_loader = DataLoader(
@@ -425,8 +388,7 @@ def create_dataloaders(
         batch_sampler=val_batch_sampler,
         num_workers=num_workers,
         pin_memory=use_pin_memory,
-        persistent_workers=True if num_workers > 0 else False,
-        collate_fn=debug_collate
+        persistent_workers=True if num_workers > 0 else False
     )
     
     test_loader = None
@@ -451,8 +413,7 @@ def create_dataloaders(
             batch_sampler=test_batch_sampler,
             num_workers=num_workers,
             pin_memory=use_pin_memory,
-            persistent_workers=True if num_workers > 0 else False,
-            collate_fn=debug_collate
+            persistent_workers=True if num_workers > 0 else False
         )
     
     logger.info(f"Created dataloaders: Train={len(train_dataset)}, "
