@@ -550,12 +550,10 @@ class DiscreteDiscreteDiffusionModel3D(nn.Module):
         """
         # Conditional prediction (with text)
         t_embed = self.time_embed(t)
-        cond_context = torch.cat([t_embed, cond_proj], dim=1)
-        logits_cond = self.unets[size](x, cond_context)
+        logits_cond = self.unets[size](x, t_embed, cond_proj)
         
         # Unconditional prediction (without text)
-        uncond_context = torch.cat([t_embed, uncond_proj], dim=1)
-        logits_uncond = self.unets[size](x, uncond_context)
+        logits_uncond = self.unets[size](x, t_embed, uncond_proj)
         
         # Classifier-Free Guidance formula
         logits = logits_uncond + guidance_scale * (logits_cond - logits_uncond)
