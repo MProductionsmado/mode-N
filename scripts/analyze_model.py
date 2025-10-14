@@ -18,7 +18,7 @@ with open('config/config.yaml') as f:
     config = yaml.safe_load(f)
 
 # Load model
-checkpoint_path = 'models/minecraft-vae-epoch=49-val/loss=0.0453.ckpt'
+checkpoint_path = 'models/minecraft-vae-epoch=46-val/loss=0.1695.ckpt'
 print(f"Loading OLD checkpoint (without class weights): {checkpoint_path}")
 module = VAELightningModule.load_from_checkpoint(
     checkpoint_path,
