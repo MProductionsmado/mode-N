@@ -29,31 +29,30 @@ model:
     model_name: "all-MiniLM-L6-v2"  # Sentence-BERT model
     embedding_dim: 384
     
-  # 3D Encoder/Decoder
+  # 3D UNet for Diffusion
   encoder:
     channels: [128, 256, 512, 1024]
     kernel_size: 4
     stride: 2
     padding: 1
     
-  decoder:
-    channels: [512, 256, 128, 64]
-    kernel_size: 4
-    stride: 2
-    padding: 1
-    output_activation: "softmax"  # For block type prediction
-    
-  # VAE parameters
-  vae:
-    beta: 0.01  # KL divergence weight - very low for maximum reconstruction quality
-    kl_annealing: true
-    kl_annealing_epochs: 30  # Fast annealing
+  # Diffusion parameters (DDPM)
+  diffusion:
+    num_timesteps: 1000  # Number of diffusion steps
+    noise_schedule: "cosine"  # 'linear' or 'cosine' (cosine is better)
+    beta_start: 0.0001  # For linear schedule
+    beta_end: 0.02  # For linear schedule
+    time_embed_dim: 256  # Time embedding dimension
+    num_res_blocks: 2  # Residual blocks per level
+    attention_levels: [2, 3]  # Add attention at these UNet levels (deeper levels)
+    dropout: 0.1  # Dropout for regularization
+    sampling_steps: 50  # DDIM sampling steps (50 is fast, 1000 is slow but better)
 
 # Training Settings
 training:
-  batch_size: 24
-  num_epochs: 300
-  learning_rate: 0.002  # Aggressive learning rate for faster convergence
+  batch_size: 16  # Reduced for diffusion (needs more memory per step)
+  num_epochs: 200  # Diffusion converges faster than VAE
+  learning_rate: 0.0001  # Lower LR for stable diffusion training
   weight_decay: 0.00001
   
   # Optimizer
