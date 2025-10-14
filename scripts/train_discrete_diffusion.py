@@ -59,6 +59,41 @@ def main():
     logger.info(f"Train dataset: {len(train_dataset)} samples")
     logger.info(f"Val dataset: {len(val_dataset)} samples")
     
+    # Custom collate function to handle different sizes
+    def size_aware_collate(batch):
+        """Group batch items by size to avoid dimension mismatch"""
+        # Group by size
+        size_groups = {}
+        for item in batch:
+            size = item['size_name']
+            if size not in size_groups:
+                size_groups[size] = []
+            size_groups[size].append(item)
+        
+        # If all same size, use default collate
+        if len(size_groups) == 1:
+            size_name = list(size_groups.keys())[0]
+            items = size_groups[size_name]
+            return {
+                'voxels': torch.stack([item['voxels'] for item in items]),
+                'text_embedding': torch.stack([item['text_embedding'] for item in items]),
+                'size': torch.stack([item['size'] for item in items]),
+                'size_name': [item['size_name'] for item in items],
+                'prompt': [item['prompt'] for item in items]
+            }
+        else:
+            # Mixed sizes - just return first size group
+            # (This shouldn't happen often with shuffling)
+            size_name = list(size_groups.keys())[0]
+            items = size_groups[size_name]
+            return {
+                'voxels': torch.stack([item['voxels'] for item in items]),
+                'text_embedding': torch.stack([item['text_embedding'] for item in items]),
+                'size': torch.stack([item['size'] for item in items]),
+                'size_name': [item['size_name'] for item in items],
+                'prompt': [item['prompt'] for item in items]
+            }
+    
     # Create dataloaders
     # Use num_workers=0 to avoid multiprocessing issues with tensor storage
     train_loader = DataLoader(
@@ -67,7 +102,8 @@ def main():
         shuffle=True,
         num_workers=0,
         pin_memory=True,
-        persistent_workers=False
+        persistent_workers=False,
+        collate_fn=size_aware_collate
     )
     
     val_loader = DataLoader(
@@ -76,7 +112,8 @@ def main():
         shuffle=False,
         num_workers=0,
         pin_memory=True,
-        persistent_workers=False
+        persistent_workers=False,
+        collate_fn=size_aware_collate
     )
     
     # Create model
