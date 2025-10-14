@@ -44,13 +44,13 @@ model:
     beta_end: 0.02  # For linear schedule
     time_embed_dim: 256  # Time embedding dimension
     num_res_blocks: 3  # INCREASED: More residual blocks for better long-range dependencies (was 2)
-    attention_levels: [1, 2, 3]  # EXPANDED: Attention at more levels for global structure (was [2,3])
+    attention_levels: [2, 3]  # FALLBACK: Level 1 attention uses too much VRAM (was [1,2,3])
     dropout: 0.15  # INCREASED: More dropout for better generalization (was 0.1)
     sampling_steps: 50  # DDIM sampling steps (50 is fast, 1000 is slow but better)
 
 # Training Settings
 training:
-  batch_size: 8  # Reduced for diffusion (UNet uses much more memory than VAE)
+  batch_size: 4  # REDUCED: Attention at level 1 needs much more VRAM (was 8)
   num_epochs: 400  # INCREASED: Even more epochs for fine details
   learning_rate: 0.00002  # FURTHER REDUCED: Much slower learning for structural consistency (was 0.00005)
   weight_decay: 0.00001
