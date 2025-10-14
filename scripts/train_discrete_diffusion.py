@@ -60,22 +60,23 @@ def main():
     logger.info(f"Val dataset: {len(val_dataset)} samples")
     
     # Create dataloaders
+    # Use num_workers=0 to avoid multiprocessing issues with tensor storage
     train_loader = DataLoader(
         train_dataset,
         batch_size=config['training']['batch_size'],
         shuffle=True,
-        num_workers=config['hardware']['num_workers'],
+        num_workers=0,
         pin_memory=True,
-        persistent_workers=True if config['hardware']['num_workers'] > 0 else False
+        persistent_workers=False
     )
     
     val_loader = DataLoader(
         val_dataset,
         batch_size=config['training']['batch_size'],
         shuffle=False,
-        num_workers=config['hardware']['num_workers'],
+        num_workers=0,
         pin_memory=True,
-        persistent_workers=True if config['hardware']['num_workers'] > 0 else False
+        persistent_workers=False
     )
     
     # Create model
