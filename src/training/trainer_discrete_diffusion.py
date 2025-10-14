@@ -163,9 +163,11 @@ def create_trainer(config: Dict, logger_name: str = "minecraft_discrete_diffusio
     callbacks.append(lr_monitor)
     
     # Create trainer
-    # Multi-GPU support
+    # Multi-GPU support with CFG compatibility
     num_devices = config['hardware'].get('num_gpus', 1)
-    strategy = 'ddp' if num_devices > 1 or num_devices == -1 else 'auto'
+    # Use ddp_find_unused_parameters_true for CFG (conditioning dropout)
+    # This allows DDP to handle cases where text embeddings are dropped
+    strategy = 'ddp_find_unused_parameters_true' if num_devices > 1 or num_devices == -1 else 'auto'
     
     trainer = pl.Trainer(
         max_epochs=config['training']['num_epochs'],
