@@ -32,7 +32,12 @@ class VAELoss(nn.Module):
         self.kl_weight = kl_weight
         self.kl_annealing = kl_annealing
         self.kl_annealing_epochs = kl_annealing_epochs
-        self.class_weights = class_weights
+        
+        # Register class_weights as a buffer so it moves with the module
+        if class_weights is not None:
+            self.register_buffer('class_weights', class_weights)
+        else:
+            self.class_weights = None
         
         self.current_epoch = 0
     
