@@ -27,9 +27,13 @@ class DiscreteDiffusionLightningModule(pl.LightningModule):
         # Create model
         self.model = DiscreteDiscreteDiffusionModel3D(config)
         
+        # Classifier-Free Guidance: Conditioning dropout rate
+        self.conditioning_dropout = config['training'].get('conditioning_dropout', 0.1)
+        
         logger.info("Initialized Discrete Diffusion Model")
         logger.info(f"Number of block categories: {self.model.num_classes}")
         logger.info(f"Timesteps: {self.model.num_timesteps}")
+        logger.info(f"Conditioning Dropout: {self.conditioning_dropout * 100:.1f}% (CFG)")
     
     def forward(self, batch):
         """Forward pass"""
@@ -48,8 +52,23 @@ class DiscreteDiffusionLightningModule(pl.LightningModule):
         return predicted_logits, target_onehot
     
     def training_step(self, batch, batch_idx):
-        """Training step"""
-        predicted_logits, target_onehot = self(batch)
+        """Training step with Conditioning Dropout for CFG"""
+        # Extract batch data
+        voxels_onehot = batch['voxels']
+        text_embedding = batch['text_embedding']
+        size_name = batch['size_name'][0]
+        
+        # Classifier-Free Guidance: Randomly drop conditioning
+        if torch.rand(1).item() < self.conditioning_dropout:
+            # Replace text embedding with zeros (unconditional)
+            text_embedding = torch.zeros_like(text_embedding)
+        
+        # Forward through model
+        predicted_logits, target_onehot, t = self.model(
+            x=voxels_onehot,
+            text_embed=text_embedding,
+            size=size_name
+        )
         
         # Cross-Entropy Loss
         # predicted_logits: (B, C, D, H, W)

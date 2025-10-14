@@ -44,16 +44,17 @@ model:
     beta_end: 0.02  # For linear schedule
     time_embed_dim: 256  # Time embedding dimension
     num_res_blocks: 3  # INCREASED: More residual blocks for better long-range dependencies (was 2)
-    attention_levels: [2, 3]  # FALLBACK: Level 1 attention uses too much VRAM (was [1,2,3])
+    attention_levels: [1, 2, 3]  # FALLBACK: Level 1 attention uses too much VRAM (was [1,2,3])
     dropout: 0.15  # INCREASED: More dropout for better generalization (was 0.1)
     sampling_steps: 50  # DDIM sampling steps (50 is fast, 1000 is slow but better)
 
 # Training Settings
 training:
-  batch_size: 4  # REDUCED: Attention at level 1 needs much more VRAM (was 8)
+  batch_size: 4  # Multi-GPU: 4 per GPU × 4 GPUs = effective 16 (was 2 for single GPU)
   num_epochs: 400  # INCREASED: Even more epochs for fine details
   learning_rate: 0.00002  # FURTHER REDUCED: Much slower learning for structural consistency (was 0.00005)
   weight_decay: 0.00001
+  conditioning_dropout: 0.1  # CFG: 10% training without text for diverse generation
   
   # Optimizer
   optimizer: "adam"
@@ -78,61 +79,77 @@ training:
 generation:
   num_samples: 1
   temperature: 1.0
-  guidance_scale: 1.0  # Classifier-free guidance weight
+  guidance_scale: 3.0  # CFG: 1.0=no guidance, 3.0=balanced, 7.5=strong text adherence
   
 # Hardware
 hardware:
   device: "cuda"  # cuda or cpu
   num_workers: 8  # Data loading workers (0 for main process only)
   precision: 16  # 16 for mixed precision, 32 for full precision
-  num_gpus: 1  # 1 for single GPU, -1 for ALL GPUs, [0,1,2] for specific GPUs
+  num_gpus: 4  # Multi-GPU: 4 GPUs for parallel training (was 1)
   
 # Block vocabulary (most common Minecraft blocks in nature assets)
 # Note: mcschematic uses "_wood" not "_log" for tree trunks!
 blocks:
   air: 0
-  oak_wood: 1
-  oak_log: 2
-  oak_leaves: 3
-  birch_wood: 4
-  birch_log: 5
-  birch_leaves: 6
-  spruce_wood: 7
-  spruce_log: 8
-  spruce_leaves: 9
-  acacia_wood: 10
-  acacia_log: 11
-  acacia_leaves: 12
-  dark_oak_wood: 13
-  dark_oak_log: 14
-  dark_oak_leaves: 15
-  oak_planks: 16
-  birch_planks: 17
-  spruce_planks: 18
-  grass_block: 19
-  dirt: 20
-  coarse_dirt: 21
-  podzol: 22
-  stone: 23
-  cobblestone: 24
-  mossy_cobblestone: 25
-  vine: 26
-  bee_nest: 27
-  beehive: 28
-  mushroom_stem: 29
-  brown_mushroom_block: 30
-  red_mushroom_block: 31
-  yellow_stained_glass: 32
-  yellow_stained_glass_pane: 33
-  yellow_wool: 34
-  yellow_glazed_terracotta: 35
-  yellow_concrete: 36
-  orange_stained_glass: 37
-  orange_stained_glass_pane: 38
-  orange_wool: 39
-  orange_concrete: 40
-  dandelion: 41
-  azure_bluet: 42
-  oxeye_daisy: 43
-  barrier: 44
-  # Add more as needed
+  oak_leaves: 1
+  spruce_leaves: 2
+  birch_leaves: 3
+  jungle_leaves: 4
+  dark_oak_leaves: 5
+  acacia_leaves: 6
+  azalea_leaves: 7
+  flowering_azalea_leaves: 8
+  cherry_leaves: 9
+  mangrove_leaves: 10
+  oak_log: 11
+  spruce_log: 12
+  birch_log: 13
+  jungle_log: 14
+  dark_oak_log: 15
+  acacia_log: 16
+  tall_grass: 17
+  short_grass: 18
+  fern: 19
+  grass_block: 20
+  moss_block: 21
+  moss_carpet: 22
+  dandelion: 23
+  poppy: 24
+  blue_orchid: 25
+  allium: 26
+  azure_bluet: 27
+  red_tulip: 28
+  white_tulip: 29
+  pink_tulip: 30
+  oxeye_daisy: 31
+  sunflower: 32
+  peony: 33
+  pink_petals: 34
+  brown_mushroom: 35
+  red_mushroom: 36
+  brown_mushroom_block: 37
+  stone: 38
+  cobblestone: 39
+  mossy_cobblestone: 40
+  andesite: 41
+  granite: 42
+  diorite: 43
+  dirt: 44
+  coarse_dirt: 45
+  snow: 46
+  snow_block: 47
+  ice: 48
+  packed_ice: 49
+  cactus: 50
+  vine: 51
+  lily_pad: 52
+  dead_bush: 53
+  oak_sapling: 54
+  spruce_sapling: 55
+  birch_sapling: 56
+  jungle_sapling: 57
+  dark_oak_sapling: 58
+  acacia_sapling: 59
+  azalea: 60
+  flowering_azalea: 61

@@ -466,16 +466,18 @@ class DiscreteDiscreteDiffusionModel3D(nn.Module):
         text_embed: torch.Tensor,
         size: str,
         num_samples: int = 1,
-        sampling_steps: Optional[int] = None
+        sampling_steps: Optional[int] = None,
+        guidance_scale: float = 1.0
     ) -> torch.Tensor:
         """
-        Generate samples using reverse diffusion
+        Generate samples using reverse diffusion with Classifier-Free Guidance
         
         Args:
             text_embed: Text embeddings (B, text_embed_dim)
             size: Size category
             num_samples: Number of samples
             sampling_steps: Number of steps (None = all timesteps)
+            guidance_scale: CFG scale (1.0=no guidance, 3.0=balanced, 7.5=strong)
         
         Returns:
             Generated one-hot voxels (B, C, D, H, W)
@@ -486,8 +488,12 @@ class DiscreteDiscreteDiffusionModel3D(nn.Module):
         dims = self.config['model']['sizes'][size]['dims']
         D, H, W = dims
         
-        # Project text embeddings once
+        # Project text embeddings
         text_proj = self.text_proj(text_embed)
+        
+        # Create unconditional embedding (zeros) for CFG
+        uncond_embed = torch.zeros_like(text_embed)
+        uncond_proj = self.text_proj(uncond_embed)
         
         # Start from uniform distribution over classes
         x = torch.ones(num_samples, self.num_classes, D, H, W, device=device) / self.num_classes
@@ -501,9 +507,86 @@ class DiscreteDiscreteDiffusionModel3D(nn.Module):
                 self.num_timesteps - 1, 0, sampling_steps, dtype=torch.long, device=device
             ).tolist()
         
-        # Iterative denoising
+        # Iterative denoising with CFG
         for t in timesteps:
             t_batch = torch.full((num_samples,), t, device=device, dtype=torch.long)
-            x = self.p_sample(x, t_batch, text_embed, text_proj, size)
+            
+            if guidance_scale == 1.0:
+                # No guidance - standard generation
+                x = self.p_sample(x, t_batch, text_embed, text_proj, size)
+            else:
+                # Classifier-Free Guidance
+                x = self.p_sample_cfg(x, t_batch, text_embed, text_proj, 
+                                     uncond_embed, uncond_proj, size, guidance_scale)
         
         return x
+    
+    def p_sample_cfg(
+        self,
+        x: torch.Tensor,
+        t: torch.Tensor,
+        cond_embed: torch.Tensor,
+        cond_proj: torch.Tensor,
+        uncond_embed: torch.Tensor,
+        uncond_proj: torch.Tensor,
+        size: str,
+        guidance_scale: float
+    ) -> torch.Tensor:
+        """
+        Sample with Classifier-Free Guidance
+        
+        Args:
+            x: Current state (B, C, D, H, W)
+            t: Timestep (B,)
+            cond_embed: Conditional text embedding
+            cond_proj: Projected conditional embedding
+            uncond_embed: Unconditional (zero) embedding
+            uncond_proj: Projected unconditional embedding
+            size: Size category
+            guidance_scale: Guidance strength
+        
+        Returns:
+            Next state (B, C, D, H, W)
+        """
+        # Conditional prediction (with text)
+        t_embed = self.time_embed(t)
+        cond_context = torch.cat([t_embed, cond_proj], dim=1)
+        logits_cond = self.unet(x, cond_context, size)
+        
+        # Unconditional prediction (without text)
+        uncond_context = torch.cat([t_embed, uncond_proj], dim=1)
+        logits_uncond = self.unet(x, uncond_context, size)
+        
+        # Classifier-Free Guidance formula
+        logits = logits_uncond + guidance_scale * (logits_cond - logits_uncond)
+        
+        # Convert logits to probabilities
+        probs = F.softmax(logits, dim=1)  # (B, C, D, H, W)
+        
+        # Get posterior distribution q(x_{t-1} | x_t, x_0)
+        x_0_pred = probs  # Predicted x_0 distribution
+        
+        # Sample from posterior
+        return self._posterior_sample(x, x_0_pred, t)
+    
+    def _posterior_sample(self, x_t: torch.Tensor, x_0_pred: torch.Tensor, t: torch.Tensor) -> torch.Tensor:
+        """Helper to sample from posterior (reuse existing logic)"""
+        # Get alpha values
+        alpha_t = self.alpha[t][:, None, None, None, None]
+        alpha_t_minus_1 = torch.where(
+            t[:, None, None, None, None] > 0,
+            self.alpha[t - 1][:, None, None, None, None],
+            torch.ones_like(alpha_t)
+        )
+        
+        # Posterior mean
+        coef1 = alpha_t_minus_1 * (1 - alpha_t) / (1 - alpha_t * alpha_t_minus_1)
+        coef2 = alpha_t * (1 - alpha_t_minus_1) / (1 - alpha_t * alpha_t_minus_1)
+        
+        posterior_mean = coef1 * x_0_pred + coef2 * x_t
+        
+        # Clamp to valid probability simplex
+        posterior_mean = torch.clamp(posterior_mean, min=1e-8)
+        posterior_mean = posterior_mean / posterior_mean.sum(dim=1, keepdim=True)
+        
+        return posterior_mean

@@ -39,6 +39,8 @@ def main():
                        help='Temperature for sampling (<=0.3 more deterministic, >1.0 more diverse)')
     parser.add_argument('--sample-mode', type=str, default='argmax', choices=['argmax','multinomial'],
                        help='argmax: pick most likely block; multinomial: sample per voxel')
+    parser.add_argument('--guidance-scale', type=float, default=None,
+                       help='CFG guidance scale (1.0=no guidance, 3.0=balanced, 7.5=strong). Default from config.')
     parser.add_argument('--seed', type=int, default=None,
                        help='Random seed for reproducibility')
     
@@ -95,18 +97,23 @@ def main():
         device=device
     )
     
+    # Get guidance scale
+    guidance_scale = args.guidance_scale if args.guidance_scale is not None else config['generation'].get('guidance_scale', 1.0)
+    
     # Generate
     logger.info(f"Generating {args.num_samples} sample(s)...")
     logger.info(f"Sampling steps: {args.sampling_steps}")
+    logger.info(f"Guidance scale: {guidance_scale} (CFG)")
     
     with torch.no_grad():
-        # Generate using discrete diffusion
+        # Generate using discrete diffusion with CFG
         # Returns probabilities over classes (B, C, D, H, W)
         generated_probs = model.model.generate(
             text_embed=text_embed,
             size=size,
             num_samples=args.num_samples,
-            sampling_steps=args.sampling_steps
+            sampling_steps=args.sampling_steps,
+            guidance_scale=guidance_scale
         )
         
         if args.temperature != 1.0:
