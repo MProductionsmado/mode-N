@@ -41,8 +41,8 @@ class DiffusionLightningModule(pl.LightningModule):
     
     def training_step(self, batch: Dict, batch_idx: int) -> torch.Tensor:
         voxels = batch['voxels']  # (B, D, H, W) - class indices
-        text_embed = batch['text_embed']  # (B, 384)
-        size = batch['size'][0]  # All items in batch have same size
+        text_embed = batch['text_embedding']  # (B, 384)
+        size = batch['size_name'][0]  # All items in batch have same size
         
         # Convert to one-hot encoding
         num_classes = len(self.config['blocks'])
@@ -68,8 +68,8 @@ class DiffusionLightningModule(pl.LightningModule):
     
     def validation_step(self, batch: Dict, batch_idx: int) -> torch.Tensor:
         voxels = batch['voxels']
-        text_embed = batch['text_embed']
-        size = batch['size'][0]
+        text_embed = batch['text_embedding']
+        size = batch['size_name'][0]
         
         # Convert to one-hot encoding
         num_classes = len(self.config['blocks'])
@@ -89,8 +89,8 @@ class DiffusionLightningModule(pl.LightningModule):
     
     def test_step(self, batch: Dict, batch_idx: int) -> torch.Tensor:
         voxels = batch['voxels']
-        text_embed = batch['text_embed']
-        size = batch['size'][0]
+        text_embed = batch['text_embedding']
+        size = batch['size_name'][0]
         
         # Convert to one-hot encoding
         num_classes = len(self.config['blocks'])
