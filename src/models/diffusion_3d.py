@@ -222,8 +222,8 @@ class UNet3D(nn.Module):
             
             # Residual blocks at this level
             for i in range(num_res_blocks + 1):  # +1 for skip connection
-                # First block handles skip connection
-                in_ch = ch if i > 0 else ch + out_ch
+                # First block handles skip connection from encoder
+                in_ch = ch + ch if i == 0 else out_ch
                 self.decoder.append(ResidualBlock3D(in_ch, out_ch, condition_dim, dropout))
                 ch = out_ch
             
