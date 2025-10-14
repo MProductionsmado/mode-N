@@ -213,19 +213,23 @@ class UNet3D(nn.Module):
             ResidualBlock3D(ch, ch, condition_dim, dropout)
         ])
         
-        # Decoder (upsampling)
-        self.decoder = nn.ModuleList()
+        # Decoder (upsampling) - stored as nested list for clarity
+        self.decoder_blocks = nn.ModuleList()
         self.decoder_attns = nn.ModuleList()
+        self.decoder_upsamples = nn.ModuleList()
         
         for level, mult in enumerate(reversed(channel_multipliers)):
             out_ch = channels * mult
             
-            # Residual blocks at this level
-            for i in range(num_res_blocks + 1):  # +1 for skip connection
-                # First block handles skip connection from encoder
-                in_ch = ch + ch if i == 0 else out_ch
-                self.decoder.append(ResidualBlock3D(in_ch, out_ch, condition_dim, dropout))
-                ch = out_ch
+            blocks = nn.ModuleList()
+            # First block takes concatenated input (current + skip)
+            blocks.append(ResidualBlock3D(ch + ch, out_ch, condition_dim, dropout))
+            # Remaining blocks take single input
+            for _ in range(num_res_blocks):
+                blocks.append(ResidualBlock3D(out_ch, out_ch, condition_dim, dropout))
+            
+            self.decoder_blocks.append(blocks)
+            ch = out_ch
             
             # Attention at specified levels
             rev_level = len(channel_multipliers) - 1 - level
@@ -236,7 +240,9 @@ class UNet3D(nn.Module):
             
             # Upsample (except last level)
             if level < len(channel_multipliers) - 1:
-                self.decoder.append(Upsample3D(ch))
+                self.decoder_upsamples.append(Upsample3D(ch))
+            else:
+                self.decoder_upsamples.append(nn.Identity())
         
         # Output
         self.conv_out = nn.Sequential(
@@ -291,23 +297,21 @@ class UNet3D(nn.Module):
                 h = block(h, condition)
         
         # Decoder with skip connections
-        block_idx = 0
-        attn_idx = 0
-        for level, module in enumerate(self.decoder):
-            if isinstance(module, Upsample3D):
-                h = module(h)
-            else:
-                # Pop skip connection for first block at each level
-                if block_idx % 3 == 0 and skip_connections:
-                    skip = skip_connections.pop()
-                    h = torch.cat([h, skip], dim=1)
-                
-                h = module(h, condition)
-                h = self.decoder_attns[attn_idx](h)
-                
-                block_idx += 1
-                if block_idx % 3 == 0:
-                    attn_idx += 1
+        for level in range(len(self.decoder_blocks)):
+            # Concatenate skip connection
+            if skip_connections:
+                skip = skip_connections.pop()
+                h = torch.cat([h, skip], dim=1)
+            
+            # Apply residual blocks
+            for block in self.decoder_blocks[level]:
+                h = block(h, condition)
+            
+            # Apply attention
+            h = self.decoder_attns[level](h)
+            
+            # Upsample
+            h = self.decoder_upsamples[level](h)
         
         # Output
         return self.conv_out(h)
