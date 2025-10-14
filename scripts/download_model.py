@@ -4,7 +4,11 @@ Run this once on a new machine/pod to cache the model locally
 """
 
 import logging
+import os
 from sentence_transformers import SentenceTransformer
+
+# Disable HF_TRANSFER to avoid dependency issues
+os.environ['HF_HUB_ENABLE_HF_TRANSFER'] = '0'
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
