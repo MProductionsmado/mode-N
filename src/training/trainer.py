@@ -81,6 +81,15 @@ class VAELightningModule(pl.LightningModule):
         # Forward pass
         recon, mu, logvar = self(voxels, text_emb, size_name)
         
+        # DEBUG: Verify reconstruction shape matches input
+        if recon.shape != voxels.shape:
+            raise ValueError(
+                f"❌ Reconstruction shape mismatch! "
+                f"Input voxels: {voxels.shape}, "
+                f"Reconstruction: {recon.shape}, "
+                f"size_name: '{size_name}'"
+            )
+        
         # Calculate loss
         loss, loss_dict = self.loss_fn(recon, voxels, mu, logvar)
         
