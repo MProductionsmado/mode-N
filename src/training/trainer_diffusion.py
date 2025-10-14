@@ -40,14 +40,9 @@ class DiffusionLightningModule(pl.LightningModule):
         return self.model(voxels, text_embed, size)
     
     def training_step(self, batch: Dict, batch_idx: int) -> torch.Tensor:
-        voxels = batch['voxels']  # (B, D, H, W) - class indices
+        voxels_onehot = batch['voxels']  # (B, C, D, H, W) - already one-hot encoded
         text_embed = batch['text_embedding']  # (B, 384)
         size = batch['size_name'][0]  # All items in batch have same size
-        
-        # Convert to one-hot encoding
-        num_classes = len(self.config['blocks'])
-        voxels_onehot = F.one_hot(voxels.long(), num_classes=num_classes)
-        voxels_onehot = voxels_onehot.permute(0, 4, 1, 2, 3).float()  # (B, C, D, H, W)
         
         # Forward pass (adds noise and predicts it)
         predicted_noise, actual_noise = self.forward(voxels_onehot, text_embed, size)
@@ -56,7 +51,7 @@ class DiffusionLightningModule(pl.LightningModule):
         loss = self.loss_fn(predicted_noise, actual_noise)
         
         # Log metrics
-        self.log('train/loss_step', loss, prog_bar=True, batch_size=voxels.shape[0])
+        self.log('train/loss_step', loss, prog_bar=True, batch_size=voxels_onehot.shape[0])
         
         return loss
     
@@ -67,14 +62,9 @@ class DiffusionLightningModule(pl.LightningModule):
         self.log('train/loss_epoch', avg_loss, prog_bar=True)
     
     def validation_step(self, batch: Dict, batch_idx: int) -> torch.Tensor:
-        voxels = batch['voxels']
+        voxels_onehot = batch['voxels']
         text_embed = batch['text_embedding']
         size = batch['size_name'][0]
-        
-        # Convert to one-hot encoding
-        num_classes = len(self.config['blocks'])
-        voxels_onehot = F.one_hot(voxels.long(), num_classes=num_classes)
-        voxels_onehot = voxels_onehot.permute(0, 4, 1, 2, 3).float()
         
         # Forward pass
         predicted_noise, actual_noise = self.forward(voxels_onehot, text_embed, size)
@@ -83,19 +73,14 @@ class DiffusionLightningModule(pl.LightningModule):
         loss = self.loss_fn(predicted_noise, actual_noise)
         
         # Log metrics
-        self.log('val/loss', loss, prog_bar=True, batch_size=voxels.shape[0])
+        self.log('val/loss', loss, prog_bar=True, batch_size=voxels_onehot.shape[0])
         
         return loss
     
     def test_step(self, batch: Dict, batch_idx: int) -> torch.Tensor:
-        voxels = batch['voxels']
+        voxels_onehot = batch['voxels']
         text_embed = batch['text_embedding']
         size = batch['size_name'][0]
-        
-        # Convert to one-hot encoding
-        num_classes = len(self.config['blocks'])
-        voxels_onehot = F.one_hot(voxels.long(), num_classes=num_classes)
-        voxels_onehot = voxels_onehot.permute(0, 4, 1, 2, 3).float()
         
         # Forward pass
         predicted_noise, actual_noise = self.forward(voxels_onehot, text_embed, size)
@@ -104,7 +89,7 @@ class DiffusionLightningModule(pl.LightningModule):
         loss = self.loss_fn(predicted_noise, actual_noise)
         
         # Log metrics
-        self.log('test/loss', loss, batch_size=voxels.shape[0])
+        self.log('test/loss', loss, batch_size=voxels_onehot.shape[0])
         
         return loss
     
