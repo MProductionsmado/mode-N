@@ -183,18 +183,21 @@ class UNet3D(nn.Module):
         # Initial convolution
         self.conv_in = nn.Conv3d(in_channels, channels, kernel_size=3, padding=1)
         
-        # Encoder (downsampling)
-        self.encoder = nn.ModuleList()
+        # Encoder (downsampling) - stored as nested list for clarity
+        self.encoder_blocks = nn.ModuleList()
         self.encoder_attns = nn.ModuleList()
+        self.encoder_downsamples = nn.ModuleList()
         
         ch = channels
         for level, mult in enumerate(channel_multipliers):
             out_ch = channels * mult
             
             # Residual blocks at this level
+            blocks = nn.ModuleList()
             for _ in range(num_res_blocks):
-                self.encoder.append(ResidualBlock3D(ch, out_ch, condition_dim, dropout))
+                blocks.append(ResidualBlock3D(ch, out_ch, condition_dim, dropout))
                 ch = out_ch
+            self.encoder_blocks.append(blocks)
             
             # Attention at specified levels
             if level in attention_levels:
@@ -204,7 +207,9 @@ class UNet3D(nn.Module):
             
             # Downsample (except last level)
             if level < len(channel_multipliers) - 1:
-                self.encoder.append(Downsample3D(ch))
+                self.encoder_downsamples.append(Downsample3D(ch))
+            else:
+                self.encoder_downsamples.append(nn.Identity())
         
         # Bottleneck
         self.bottleneck = nn.ModuleList([
@@ -278,16 +283,19 @@ class UNet3D(nn.Module):
         # Encoder with skip connections
         skip_connections = []
         
-        block_idx = 0
-        attn_idx = 0
-        for level in range(len(self.encoder)):
-            if isinstance(self.encoder[level], Downsample3D):
-                h = self.encoder[level](h)
-            else:
-                h = self.encoder[level](h, condition)
-                h = self.encoder_attns[attn_idx](h)
-                skip_connections.append(h)
-                attn_idx += 1
+        for level in range(len(self.encoder_blocks)):
+            # Apply residual blocks
+            for block in self.encoder_blocks[level]:
+                h = block(h, condition)
+            
+            # Apply attention
+            h = self.encoder_attns[level](h)
+            
+            # Save skip connection
+            skip_connections.append(h)
+            
+            # Downsample
+            h = self.encoder_downsamples[level](h)
         
         # Bottleneck
         for block in self.bottleneck:
