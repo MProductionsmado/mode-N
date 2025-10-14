@@ -45,21 +45,21 @@ model:
     
   # VAE parameters
   vae:
-    beta: 0.1  # KL divergence weight (lower = focus on reconstruction)
+    beta: 0.05  # KL divergence weight (lower = focus on reconstruction) - reduced for better quality
     kl_annealing: true
-    kl_annealing_epochs: 100
+    kl_annealing_epochs: 50  # Faster annealing
 
 # Training Settings
 training:
   batch_size: 24
   num_epochs: 300
-  learning_rate: 0.0005
+  learning_rate: 0.001  # Increased from 0.0005 to 0.001 (2x faster)
   weight_decay: 0.00001
   
   # Optimizer
   optimizer: "adam"
   scheduler: "cosine"
-  warmup_epochs: 10
+  warmup_epochs: 5  # Reduced from 10 to 5 for faster initial learning
   
   # Checkpointing
   save_every_n_epochs: 10
