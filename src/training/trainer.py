@@ -53,7 +53,13 @@ class VAELightningModule(pl.LightningModule):
         """Training step"""
         voxels = batch['voxels']
         text_emb = batch['text_embedding']
-        size_name = batch['size_name'][0]  # Assume same size in batch
+        
+        # Get size_name - verify all are the same
+        size_names = batch['size_name']
+        unique_sizes = set(size_names)
+        if len(unique_sizes) > 1:
+            raise ValueError(f"Mixed sizes in training batch: {unique_sizes}")
+        size_name = size_names[0]
         
         # Forward pass
         recon, mu, logvar = self(voxels, text_emb, size_name)
@@ -79,7 +85,13 @@ class VAELightningModule(pl.LightningModule):
         """Validation step"""
         voxels = batch['voxels']
         text_emb = batch['text_embedding']
-        size_name = batch['size_name'][0]
+        
+        # Get size_name - verify all are the same
+        size_names = batch['size_name']
+        unique_sizes = set(size_names)
+        if len(unique_sizes) > 1:
+            raise ValueError(f"Mixed sizes in validation batch: {unique_sizes}")
+        size_name = size_names[0]
         
         # Forward pass
         recon, mu, logvar = self(voxels, text_emb, size_name)

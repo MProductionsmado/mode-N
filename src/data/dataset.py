@@ -255,19 +255,35 @@ def debug_collate(batch):
     sizes = [item['size_name'] for item in batch]
     voxel_shapes = [item['voxels'].shape for item in batch]
     
+    # Log first few batches
+    import random
+    if random.random() < 0.01:  # Log 1% of batches
+        logger.info(f"Batch contains {len(batch)} samples")
+        logger.info(f"Sizes: {set(sizes)} (count: {len(sizes)})")
+        logger.info(f"Unique voxel shapes: {set(voxel_shapes)}")
+    
     if len(set(sizes)) > 1:
-        logger.error(f"Mixed sizes in batch! Sizes: {sizes}")
+        logger.error(f"❌ Mixed sizes in batch! Sizes: {sizes}")
         logger.error(f"Voxel shapes: {voxel_shapes}")
         raise ValueError(f"Mixed sizes in batch: {set(sizes)}")
     
     if len(set(voxel_shapes)) > 1:
-        logger.error(f"Mixed voxel shapes in batch! Shapes: {voxel_shapes}")
+        logger.error(f"❌ Mixed voxel shapes in batch! Shapes: {voxel_shapes}")
         logger.error(f"Sizes: {sizes}")
         raise ValueError(f"Mixed voxel shapes in batch: {set(voxel_shapes)}")
     
     # Default collate
     from torch.utils.data.dataloader import default_collate
-    return default_collate(batch)
+    result = default_collate(batch)
+    
+    # Verify the collated result
+    if 'size_name' in result:
+        unique_sizes = set(result['size_name'])
+        if len(unique_sizes) > 1:
+            logger.error(f"❌ After collation, multiple sizes: {unique_sizes}")
+            raise ValueError(f"Multiple sizes after collation: {unique_sizes}")
+    
+    return result
 
 
 class SizeGroupedBatchSampler:
