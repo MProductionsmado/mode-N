@@ -31,7 +31,7 @@ model:
     
   # 3D Encoder/Decoder
   encoder:
-    channels: [64, 128, 256, 512]
+    channels: [128, 256, 512, 1024]
     kernel_size: 4
     stride: 2
     padding: 1
@@ -45,15 +45,15 @@ model:
     
   # VAE parameters
   vae:
-    beta: 0.5  # KL divergence weight
+    beta: 0.1  # KL divergence weight (lower = focus on reconstruction)
     kl_annealing: true
-    kl_annealing_epochs: 50
+    kl_annealing_epochs: 100
 
 # Training Settings
 training:
   batch_size: 24
-  num_epochs: 200
-  learning_rate: 0.0002
+  num_epochs: 300
+  learning_rate: 0.0005
   weight_decay: 0.00001
   
   # Optimizer
@@ -68,7 +68,7 @@ training:
   # Early stopping
   early_stopping:
     enabled: true
-    patience: 20
+    patience: 50
     monitor: "val/loss"
     
   # Logging
