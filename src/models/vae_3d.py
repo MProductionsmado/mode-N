@@ -109,8 +109,14 @@ class Decoder3D(nn.Module):
         self.output_size = output_size
         
         # Calculate initial spatial size
-        num_layers = len(channels)
-        self.init_size = tuple(s // (2 ** num_layers) for s in output_size)
+        # We have (len(channels) - 1) ConditionalDecoderBlocks + 1 final ConvTranspose3d
+        # Each does 2x upsampling, so total is 2^len(channels)
+        num_upsample_layers = len(channels)
+        
+        # Calculate required initial size to reach target output_size
+        # Use ceiling division to handle non-power-of-2 dimensions
+        import math
+        self.init_size = tuple(math.ceil(s / (2 ** num_upsample_layers)) for s in output_size)
         
         # Combine latent and text
         self.fc = nn.Linear(latent_dim + text_dim, channels[0] * np.prod(self.init_size))
@@ -131,13 +137,15 @@ class Decoder3D(nn.Module):
         
         self.decoder_blocks = nn.ModuleList(layers)
         
-        # Final output layer
-        self.output_conv = nn.Sequential(
+        # Final output layer with adaptive upsampling
+        self.pre_output = nn.Sequential(
             nn.ConvTranspose3d(channels[-1], channels[-1], kernel_size=4, stride=2, padding=1),
             nn.GroupNorm(min(32, channels[-1]), channels[-1]),  # Use GroupNorm instead of BatchNorm
-            nn.ReLU(inplace=True),
-            nn.Conv3d(channels[-1], output_channels, kernel_size=3, padding=1)
+            nn.ReLU(inplace=True)
         )
+        
+        # Final conv to get correct channels
+        self.output_conv = nn.Conv3d(channels[-1], output_channels, kernel_size=3, padding=1)
     
     def forward(self, z: torch.Tensor, text_emb: torch.Tensor) -> torch.Tensor:
         """
@@ -162,7 +170,15 @@ class Decoder3D(nn.Module):
         for block in self.decoder_blocks:
             x = block(x, text_emb)
         
-        # Final output
+        # Upsample to near target size
+        x = self.pre_output(x)
+        
+        # Interpolate to exact output size if needed
+        current_size = x.shape[2:]  # (D, H, W)
+        if current_size != self.output_size:
+            x = F.interpolate(x, size=self.output_size, mode='trilinear', align_corners=False)
+        
+        # Final conv to get correct number of channels
         x = self.output_conv(x)
         
         return x
