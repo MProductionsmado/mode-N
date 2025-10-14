@@ -40,7 +40,7 @@ files_with_logs = 0
 files_without_logs = 0
 
 print("\n=== Analyzing first 100 schematics ===")
-for i, meta in enumerate(metadata[:100]):
+for i, meta in enumerate(metadata[:500]):
     try:
         file_path = Path('out') / meta['filename']
         voxels, _ = parser.parse_schematic(file_path)
