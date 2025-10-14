@@ -38,14 +38,19 @@ def main():
     
     # Create datasets
     logger.info("Creating datasets...")
+    data_dir = Path(config['data']['processed_dir'])
+    splits_dir = data_dir.parent / 'splits'
+    
     train_dataset = MinecraftSchematicDataset(
-        data_dir=config['data']['processed_dir'],
-        split='train'
+        metadata_file=splits_dir / 'train_metadata.json',
+        data_dir=data_dir,
+        text_encoder_name=config['data'].get('text_encoder_name', 'all-MiniLM-L6-v2')
     )
     
     val_dataset = MinecraftSchematicDataset(
-        data_dir=config['data']['processed_dir'],
-        split='val'
+        metadata_file=splits_dir / 'val_metadata.json',
+        data_dir=data_dir,
+        text_encoder_name=config['data'].get('text_encoder_name', 'all-MiniLM-L6-v2')
     )
     
     logger.info(f"Train dataset: {len(train_dataset)} samples")
