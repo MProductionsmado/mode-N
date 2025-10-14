@@ -247,6 +247,29 @@ class VoxelAugmentation(nn.Module):
         return voxels
 
 
+def debug_collate(batch):
+    """
+    Debug collate function that checks if all samples have the same size
+    """
+    # Check sizes
+    sizes = [item['size_name'] for item in batch]
+    voxel_shapes = [item['voxels'].shape for item in batch]
+    
+    if len(set(sizes)) > 1:
+        logger.error(f"Mixed sizes in batch! Sizes: {sizes}")
+        logger.error(f"Voxel shapes: {voxel_shapes}")
+        raise ValueError(f"Mixed sizes in batch: {set(sizes)}")
+    
+    if len(set(voxel_shapes)) > 1:
+        logger.error(f"Mixed voxel shapes in batch! Shapes: {voxel_shapes}")
+        logger.error(f"Sizes: {sizes}")
+        raise ValueError(f"Mixed voxel shapes in batch: {set(voxel_shapes)}")
+    
+    # Default collate
+    from torch.utils.data.dataloader import default_collate
+    return default_collate(batch)
+
+
 class SizeGroupedBatchSampler:
     """
     Batch sampler that groups samples by size category.
@@ -261,10 +284,15 @@ class SizeGroupedBatchSampler:
         # Group indices by size
         self.size_to_indices = {'normal': [], 'big': [], 'huge': []}
         for idx, item in enumerate(dataset.metadata):
-            self.size_to_indices[item['size']].append(idx)
+            size = item['size']
+            if size not in self.size_to_indices:
+                logger.warning(f"Unknown size category: {size}")
+                continue
+            self.size_to_indices[size].append(idx)
         
-        logger.info(f"Size distribution: " + 
-                   ", ".join([f"{k}={len(v)}" for k, v in self.size_to_indices.items()]))
+        size_dist = ", ".join([f"{k}={len(v)}" for k, v in self.size_to_indices.items()])
+        logger.info(f"SizeGroupedBatchSampler - Size distribution: {size_dist}")
+        logger.info(f"SizeGroupedBatchSampler - Batch size: {batch_size}, Drop last: {drop_last}")
     
     def __iter__(self):
         # Create batches for each size category
@@ -280,20 +308,20 @@ class SizeGroupedBatchSampler:
                 import random
                 random.shuffle(indices)
             
-            # Create batches
+            # Create batches - store as (size_name, indices) tuple for debugging
             for i in range(0, len(indices), self.batch_size):
-                batch = indices[i:i + self.batch_size]
-                if len(batch) == self.batch_size or not self.drop_last:
-                    all_batches.append(batch)
+                batch_indices = indices[i:i + self.batch_size]
+                if len(batch_indices) == self.batch_size or not self.drop_last:
+                    all_batches.append((size_name, batch_indices))
         
         # Shuffle batches if needed
         if self.shuffle:
             import random
             random.shuffle(all_batches)
         
-        # Yield batches
-        for batch in all_batches:
-            yield batch
+        # Yield batches (just the indices, not the size_name)
+        for size_name, batch_indices in all_batches:
+            yield batch_indices
     
     def __len__(self):
         total = 0
@@ -365,14 +393,15 @@ def create_dataloaders(
         drop_last=False
     )
     
-    # Create dataloaders with batch samplers
+    # Create dataloaders with batch samplers and debug collate
     # Note: When using batch_sampler, we don't specify batch_size, shuffle, or drop_last
     train_loader = DataLoader(
         train_dataset,
         batch_sampler=train_batch_sampler,
         num_workers=num_workers,
         pin_memory=use_pin_memory,
-        persistent_workers=True if num_workers > 0 else False
+        persistent_workers=True if num_workers > 0 else False,
+        collate_fn=debug_collate
     )
     
     val_loader = DataLoader(
@@ -380,7 +409,8 @@ def create_dataloaders(
         batch_sampler=val_batch_sampler,
         num_workers=num_workers,
         pin_memory=use_pin_memory,
-        persistent_workers=True if num_workers > 0 else False
+        persistent_workers=True if num_workers > 0 else False,
+        collate_fn=debug_collate
     )
     
     test_loader = None
@@ -405,7 +435,8 @@ def create_dataloaders(
             batch_sampler=test_batch_sampler,
             num_workers=num_workers,
             pin_memory=use_pin_memory,
-            persistent_workers=True if num_workers > 0 else False
+            persistent_workers=True if num_workers > 0 else False,
+            collate_fn=debug_collate
         )
     
     logger.info(f"Created dataloaders: Train={len(train_dataset)}, "
