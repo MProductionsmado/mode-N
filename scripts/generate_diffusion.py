@@ -35,6 +35,8 @@ def main():
                        help='Number of samples to generate')
     parser.add_argument('--sampling-steps', type=int, default=50,
                        help='Number of denoising steps (50=fast, 1000=slow but better quality)')
+    parser.add_argument('--temperature', type=float, default=0.7,
+                       help='Sampling temperature (0.5=conservative, 1.0=diverse, 0.1=almost argmax)')
     parser.add_argument('--seed', type=int, default=None,
                        help='Random seed for reproducibility')
     
@@ -104,8 +106,13 @@ def main():
             sampling_steps=args.sampling_steps
         )
         
-        # Convert from one-hot to class indices
-        generated_voxels = torch.argmax(generated_onehot, dim=1)  # (B, D, H, W)
+        # Apply temperature for sampling
+        temperature = args.temperature
+        logits = generated_onehot / temperature
+        probs = torch.softmax(logits, dim=1)  # (B, C, D, H, W)
+        
+        # Use argmax for most confident prediction (better for discrete data)
+        generated_voxels = torch.argmax(probs, dim=1)  # (B, D, H, W)
     
     # Create output directory
     output_dir = Path(args.output)
