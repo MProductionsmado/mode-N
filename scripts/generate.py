@@ -48,7 +48,8 @@ def generate_from_prompt(
     prompt: str,
     num_samples: int = 1,
     temperature: float = 1.0,
-    device: str = 'cuda'
+    device: str = 'cuda',
+    size_override: str = None
 ) -> tuple:
     """
     Generate voxel arrays from text prompt
@@ -72,7 +73,7 @@ def generate_from_prompt(
     text_embedding = text_embedding.to(device)
     
     # Determine size
-    size_category = parse_size_from_prompt(prompt)
+    size_category = size_override if size_override else parse_size_from_prompt(prompt)
     
     logger.info(f"Generating {num_samples} sample(s) for prompt: '{prompt}'")
     logger.info(f"Size category: {size_category}")
@@ -110,6 +111,9 @@ def main():
                        help='Number of variations to generate')
     parser.add_argument('--temperature', type=float, default=1.0,
                        help='Sampling temperature (0.5-2.0)')
+    parser.add_argument('--size', type=str, default=None,
+                       choices=['normal', 'big', 'huge'],
+                       help='Override size detection (extracted from prompt if not provided)')
     parser.add_argument('--device', type=str, default='cuda',
                        choices=['cuda', 'cpu'],
                        help='Device to run on')
@@ -147,7 +151,8 @@ def main():
         args.prompt,
         num_samples=args.num_samples,
         temperature=args.temperature,
-        device=args.device
+        device=args.device,
+        size_override=args.size
     )
     
     # Create schematic parser for saving
