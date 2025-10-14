@@ -21,7 +21,7 @@ def setup_huggingface_cache():
     print(f"✓ Cache directory set to: {cache_dir}")
     return cache_dir
 
-def download_model(model_name='sentence-transformers/all-MiniLM-L6-v2'):
+def download_model(model_name='all-MiniLM-L6-v2'):
     """Download the sentence-transformers model"""
     print(f"\n{'='*60}")
     print(f"Downloading model: {model_name}")
@@ -33,10 +33,8 @@ def download_model(model_name='sentence-transformers/all-MiniLM-L6-v2'):
         cache_dir = setup_huggingface_cache()
         
         print("Loading model (this may take a few minutes on first run)...")
-        model = SentenceTransformer(
-            model_name,
-            cache_folder=os.path.join(cache_dir, 'hub')
-        )
+        print("Note: This will download ~90MB from Hugging Face...")
+        model = SentenceTransformer(model_name)
         
         print("\n✓ Model downloaded successfully!")
         
