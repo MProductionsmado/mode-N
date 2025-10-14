@@ -226,8 +226,9 @@ def create_trainer(config: Dict, logger_name: str = "minecraft_vae") -> pl.Train
         filename='minecraft-vae-{epoch:02d}-{val/loss:.4f}',
         monitor='val/loss',
         mode='min',
-        save_top_k=3,
-        save_last=True,
+        save_top_k=1,  # Only save the best model
+        save_last=True,  # And the last checkpoint
+        every_n_epochs=config['training'].get('save_every_n_epochs', 50),
         verbose=True
     )
     callbacks.append(checkpoint_callback)
