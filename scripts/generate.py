@@ -88,7 +88,11 @@ def generate_from_prompt(
             temperature=temperature
         )
         
-        # Convert logits to block IDs
+        # Apply temperature scaling to logits
+        generated_logits = generated_logits / temperature
+        
+        # Convert logits to block IDs using argmax
+        # (CrossEntropyLoss does softmax internally, so argmax on logits is correct)
         generated_voxels = torch.argmax(generated_logits, dim=1)
     
     # Convert to numpy
