@@ -1,6 +1,44 @@
 # Minecraft 3D Nature Asset Generator - Schnellstart 🚀
 
-## Installation
+## Neuer RunPod Setup (START HIER!) 
+
+### Option A: Automatisches Setup (EMPFOHLEN)
+
+```bash
+# 1. Repository klonen
+git clone https://github.com/MProductionsmado/mode-N.git "model N"
+cd "model N"
+
+# 2. Setup-Script ausführen (macht alles automatisch)
+bash scripts/setup_runpod.sh
+```
+
+### Option B: Manuelles Setup
+
+```bash
+# 1. Repository klonen
+git clone https://github.com/MProductionsmado/mode-N.git "model N"
+cd "model N"
+
+# 2. Virtual Environment
+python3 -m venv venv
+source venv/bin/activate
+
+# 3. Dependencies
+pip install --upgrade pip
+pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+pip install pytorch-lightning sentence-transformers pyyaml nbtlib numpy
+
+# 4. WICHTIG: Sentence-Transformers Modell herunterladen
+python3 scripts/download_model.py
+
+# 5. Models-Verzeichnis erstellen
+mkdir -p models
+```
+
+---
+
+## Installation (Local Windows)
 
 ### 1. Python-Umgebung erstellen
 
@@ -14,13 +52,8 @@ python -m venv venv
 
 ```powershell
 pip install --upgrade pip
-pip install -r requirements.txt
-```
-
-**Hinweis**: Für CUDA-Support (GPU-Training):
-```powershell
-# Für PyTorch mit CUDA 11.8
 pip install torch torchvision --index-url https://download.pytorch.org/whl/cu118
+pip install pytorch-lightning sentence-transformers pyyaml nbtlib numpy
 ```
 
 ## Workflow
