@@ -88,31 +88,51 @@ hardware:
   precision: 16  # 16 for mixed precision, 32 for full precision
   
 # Block vocabulary (most common Minecraft blocks in nature assets)
+# Note: mcschematic uses "_wood" not "_log" for tree trunks!
 blocks:
   air: 0
-  oak_log: 1
-  oak_leaves: 2
-  birch_log: 3
-  birch_leaves: 4
-  spruce_log: 5
-  spruce_leaves: 6
-  acacia_log: 7
-  acacia_leaves: 8
-  dark_oak_log: 9
-  dark_oak_leaves: 10
-  oak_planks: 11
-  birch_planks: 12
-  grass_block: 13
-  dirt: 14
-  coarse_dirt: 15
-  podzol: 16
-  stone: 17
-  cobblestone: 18
-  mossy_cobblestone: 19
-  vine: 20
-  bee_nest: 21
-  beehive: 22
-  mushroom_stem: 23
-  brown_mushroom_block: 24
-  red_mushroom_block: 25
+  oak_wood: 1
+  oak_log: 2
+  oak_leaves: 3
+  birch_wood: 4
+  birch_log: 5
+  birch_leaves: 6
+  spruce_wood: 7
+  spruce_log: 8
+  spruce_leaves: 9
+  acacia_wood: 10
+  acacia_log: 11
+  acacia_leaves: 12
+  dark_oak_wood: 13
+  dark_oak_log: 14
+  dark_oak_leaves: 15
+  oak_planks: 16
+  birch_planks: 17
+  spruce_planks: 18
+  grass_block: 19
+  dirt: 20
+  coarse_dirt: 21
+  podzol: 22
+  stone: 23
+  cobblestone: 24
+  mossy_cobblestone: 25
+  vine: 26
+  bee_nest: 27
+  beehive: 28
+  mushroom_stem: 29
+  brown_mushroom_block: 30
+  red_mushroom_block: 31
+  yellow_stained_glass: 32
+  yellow_stained_glass_pane: 33
+  yellow_wool: 34
+  yellow_glazed_terracotta: 35
+  yellow_concrete: 36
+  orange_stained_glass: 37
+  orange_stained_glass_pane: 38
+  orange_wool: 39
+  orange_concrete: 40
+  dandelion: 41
+  azure_bluet: 42
+  oxeye_daisy: 43
+  barrier: 44
   # Add more as needed
