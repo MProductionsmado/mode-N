@@ -50,9 +50,24 @@ class MinecraftSchematicDataset(Dataset):
         
         logger.info(f"Loaded {len(self.metadata)} samples")
         
-        # Load text encoder
+        # Load text encoder with better error handling
         logger.info(f"Loading text encoder: {text_encoder_name}")
-        self.text_encoder = SentenceTransformer(text_encoder_name)
+        try:
+            # Try loading with cache_folder to avoid permission issues
+            import os
+            cache_dir = os.path.expanduser("~/.cache/huggingface/hub")
+            os.makedirs(cache_dir, exist_ok=True)
+            
+            self.text_encoder = SentenceTransformer(
+                text_encoder_name,
+                cache_folder=cache_dir
+            )
+            logger.info("Text encoder loaded successfully")
+        except Exception as e:
+            logger.error(f"Failed to load text encoder: {e}")
+            logger.info("Trying alternative loading method...")
+            # Fallback: try without cache_folder specification
+            self.text_encoder = SentenceTransformer(text_encoder_name)
         
         # Precompute text embeddings
         self._precompute_text_embeddings()
