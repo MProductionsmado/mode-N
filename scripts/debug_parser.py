@@ -76,7 +76,7 @@ for filename in test_files:
 # Now check RAW palette from NBT
 print("\n\n=== Checking RAW NBT Palette ===\n")
 
-from nbtlib import load
+from nbtlib import File
 
 for filename in test_files:
     file_path = out_dir / filename
@@ -89,8 +89,10 @@ for filename in test_files:
     
     print(f"\n📄 {file_path.name}")
     try:
-        nbt_file = load(file_path)
-        nbt = nbt_file.root
+        nbt_file = File.load(file_path, gzipped=True)
+        nbt = nbt_file
+        
+        print(f"   NBT root keys: {list(nbt.keys())}")
         
         if 'Palette' in nbt:
             palette = nbt['Palette']
@@ -103,6 +105,16 @@ for filename in test_files:
                     print(f"         ^^ THIS IS A LOG! ^^")
         else:
             print(f"   ⚠️  No Palette found in NBT!")
+        
+        # Show BlockData info
+        if 'BlockData' in nbt:
+            block_data = nbt['BlockData']
+            print(f"   BlockData: {len(block_data)} bytes")
+            # Decode first few entries
+            data_array = np.array(block_data)
+            print(f"   First 20 bytes: {data_array[:20]}")
             
     except Exception as e:
+        import traceback
         print(f"   ERROR: {e}")
+        print(f"   Traceback: {traceback.format_exc()}")
