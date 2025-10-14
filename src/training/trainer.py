@@ -110,6 +110,35 @@ class VAELightningModule(pl.LightningModule):
         
         return loss
     
+    def test_step(self, batch: Dict, batch_idx: int) -> torch.Tensor:
+        """Test step - same as validation"""
+        voxels = batch['voxels']
+        text_emb = batch['text_embedding']
+        size_names = batch['size_name']
+        size_name = size_names[0]
+        
+        # Forward pass
+        recon, mu, logvar = self(voxels, text_emb, size_name)
+        
+        # Calculate loss
+        loss, loss_dict = self.loss_fn(recon, voxels, mu, logvar)
+        
+        # Calculate metrics
+        accuracy = self.accuracy_metric(recon, voxels)
+        non_air_acc = self.non_air_accuracy(recon, voxels)
+        
+        # Get batch size for logging
+        batch_size = voxels.size(0)
+        
+        # Log metrics
+        self.log('test/loss', loss_dict['loss'], on_step=False, on_epoch=True, prog_bar=True, batch_size=batch_size)
+        self.log('test/recon_loss', loss_dict['recon_loss'], on_step=False, on_epoch=True, batch_size=batch_size)
+        self.log('test/kl_loss', loss_dict['kl_loss'], on_step=False, on_epoch=True, batch_size=batch_size)
+        self.log('test/accuracy', accuracy, on_step=False, on_epoch=True, prog_bar=True, batch_size=batch_size)
+        self.log('test/non_air_accuracy', non_air_acc, on_step=False, on_epoch=True, batch_size=batch_size)
+        
+        return loss
+    
     def on_train_epoch_end(self):
         """Called at the end of training epoch"""
         # Update KL annealing
