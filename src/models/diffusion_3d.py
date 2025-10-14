@@ -227,8 +227,8 @@ class UNet3D(nn.Module):
             out_ch = channels * mult
             
             blocks = nn.ModuleList()
-            # First block takes concatenated input (current + skip)
-            blocks.append(ResidualBlock3D(ch + ch, out_ch, condition_dim, dropout))
+            # First block takes concatenated input (current ch + skip out_ch from same level in encoder)
+            blocks.append(ResidualBlock3D(ch + out_ch, out_ch, condition_dim, dropout))
             # Remaining blocks take single input
             for _ in range(num_res_blocks):
                 blocks.append(ResidualBlock3D(out_ch, out_ch, condition_dim, dropout))
