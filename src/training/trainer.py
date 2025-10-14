@@ -69,12 +69,13 @@ class VAELightningModule(pl.LightningModule):
             'huge': (24, 64, 24)
         }
         expected = expected_shapes[size_name]
-        actual = actual_shape[2:]  # Skip batch and channel dimensions
+        actual = tuple(actual_shape[2:])  # Skip batch and channel dimensions, convert to tuple
         
         if actual != expected:
             raise ValueError(
                 f"Size mismatch! size_name='{size_name}' expects {expected} "
-                f"but voxels have shape {actual_shape} (spatial: {actual})"
+                f"but voxels have shape {actual_shape} (spatial: {actual}). "
+                f"Batch has {len(size_names)} samples, all marked as '{size_name}'"
             )
         
         # Forward pass
