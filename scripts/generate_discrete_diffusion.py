@@ -35,6 +35,10 @@ def main():
                        help='Number of samples to generate')
     parser.add_argument('--sampling-steps', type=int, default=50,
                        help='Number of denoising steps (50=fast, 1000=best quality)')
+    parser.add_argument('--temperature', type=float, default=1.0,
+                       help='Temperature for sampling (<=0.3 more deterministic, >1.0 more diverse)')
+    parser.add_argument('--sample-mode', type=str, default='argmax', choices=['argmax','multinomial'],
+                       help='argmax: pick most likely block; multinomial: sample per voxel')
     parser.add_argument('--seed', type=int, default=None,
                        help='Random seed for reproducibility')
     
@@ -105,8 +109,18 @@ def main():
             sampling_steps=args.sampling_steps
         )
         
-        # Convert probabilities to class indices (argmax)
-        generated_voxels = torch.argmax(generated_probs, dim=1)  # (B, D, H, W)
+        if args.temperature != 1.0:
+            generated_probs = generated_probs ** (1.0 / max(args.temperature, 1e-6))
+            generated_probs = generated_probs / (generated_probs.sum(dim=1, keepdim=True) + 1e-8)
+
+        if args.sample_mode == 'argmax':
+            generated_voxels = torch.argmax(generated_probs, dim=1)
+        else:
+            # Multinomial sampling per voxel
+            B, C, D, H, W = generated_probs.shape
+            probs_flat = generated_probs.permute(0,2,3,4,1).reshape(-1, C)
+            samples = torch.multinomial(probs_flat, num_samples=1).view(B, D, H, W)
+            generated_voxels = samples
     
     # Create output directory
     output_dir = Path(args.output)

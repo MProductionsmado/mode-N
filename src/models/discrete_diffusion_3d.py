@@ -417,7 +417,7 @@ class DiscreteDiscreteDiffusionModel3D(nn.Module):
         
         # Predict original one-hot from noised version
         predicted_logits = self.unets[size](x_t, time_embed, text_proj)
-        
+        # Return predicted logits and original clean target
         return predicted_logits, x, t
     
     @torch.no_grad()
@@ -433,42 +433,32 @@ class DiscreteDiscreteDiffusionModel3D(nn.Module):
         Reverse diffusion: p(x_{t-1} | x_t)
         Single denoising step for discrete data
         """
-        # Predict logits for clean data
+        # Predict logits for x_0 (clean data estimate)
         time_embed = self.time_embed(t.float())
         predicted_logits = self.unets[size](x, time_embed, text_proj)
-        
-        # Get current alpha
-        alpha_t = self.alphas[t]
-        alpha_cumprod_t = self.alphas_cumprod[t]
-        
-        # Reshape for broadcasting
-        while len(alpha_t.shape) < len(x.shape):
-            alpha_t = alpha_t.unsqueeze(-1)
-            alpha_cumprod_t = alpha_cumprod_t.unsqueeze(-1)
-        
+
+        # Estimate x_0 distribution
+        x_0_pred = F.softmax(predicted_logits, dim=1)
+
         if t[0] > 0:
-            # Compute posterior q(x_{t-1} | x_t, x_0)
+            # Previous cumulative alpha (probability of staying in same state up to t-1)
             alpha_cumprod_t_prev = self.alphas_cumprod[t - 1]
             while len(alpha_cumprod_t_prev.shape) < len(x.shape):
                 alpha_cumprod_t_prev = alpha_cumprod_t_prev.unsqueeze(-1)
-            
-            # Posterior probability
-            # Use predicted logits as x_0 estimate
-            x_0_pred = F.softmax(predicted_logits, dim=1)
-            
-            # Posterior: q(x_{t-1} | x_t, x_0)
+
+            # Prior over x_{t-1} constructed from predicted clean data
             stay_prob_prev = alpha_cumprod_t_prev
             uniform_prob_prev = (1.0 - alpha_cumprod_t_prev) / self.num_classes
-            
-            posterior = x_0_pred * stay_prob_prev + uniform_prob_prev
-            
-            # Normalize
-            posterior = posterior / (posterior.sum(dim=1, keepdim=True) + 1e-8)
-            
+            prior_prev = x_0_pred * stay_prob_prev + uniform_prob_prev
+
+            # Incorporate current noisy state x (acts like likelihood term)
+            # Element-wise product then renormalize
+            posterior_unnorm = prior_prev * (x + 1e-8)
+            posterior = posterior_unnorm / (posterior_unnorm.sum(dim=1, keepdim=True) + 1e-8)
             return posterior
         else:
-            # At t=0, return predicted distribution
-            return F.softmax(predicted_logits, dim=1)
+            # Final step: return categorical distribution for x_0
+            return x_0_pred
     
     @torch.no_grad()
     def generate(
