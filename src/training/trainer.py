@@ -35,14 +35,14 @@ class VAELightningModule(pl.LightningModule):
         
         # Compute class weights (inverse frequency, with Air downweighted heavily)
         num_classes = len(config['blocks'])
-        class_weights = torch.ones(num_classes) * 2.0  # Base weight 2.0 for all blocks
-        class_weights[0] = 0.1  # Air gets very low weight (5% of others)
-        # Wood blocks get extra weight (3.0x)
+        class_weights = torch.ones(num_classes) * 3.0  # Base weight 3.0 for all blocks (increased)
+        class_weights[0] = 0.05  # Air gets extremely low weight (1.7% of others)
+        # Wood blocks get MUCH higher weight (5.0x) to force trunk generation
         wood_blocks = ['oak_wood', 'birch_wood', 'spruce_wood', 'jungle_wood', 'acacia_wood', 'dark_oak_wood']
         for block_name in wood_blocks:
             if block_name in config['blocks']:
                 idx = config['blocks'][block_name]  # Get ID from dictionary
-                class_weights[idx] = 3.0
+                class_weights[idx] = 5.0
         
         # Create loss
         self.loss_fn = VAELoss(

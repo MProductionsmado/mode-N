@@ -45,15 +45,15 @@ model:
     
   # VAE parameters
   vae:
-    beta: 0.05  # KL divergence weight (lower = focus on reconstruction) - reduced for better quality
+    beta: 0.01  # KL divergence weight - very low for maximum reconstruction quality
     kl_annealing: true
-    kl_annealing_epochs: 50  # Faster annealing
+    kl_annealing_epochs: 30  # Fast annealing
 
 # Training Settings
 training:
   batch_size: 24
   num_epochs: 300
-  learning_rate: 0.001  # Increased from 0.0005 to 0.001 (2x faster)
+  learning_rate: 0.002  # Aggressive learning rate for faster convergence
   weight_decay: 0.00001
   
   # Optimizer
