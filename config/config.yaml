@@ -44,13 +44,13 @@ model:
     beta_end: 0.02  # For linear schedule
     time_embed_dim: 256  # Time embedding dimension
     num_res_blocks: 3  # INCREASED: More residual blocks for better long-range dependencies (was 2)
-    attention_levels: [1, 2, 3]  # FALLBACK: Level 1 attention uses too much VRAM (was [1,2,3])
+    attention_levels: [2, 3]  # RTX 4000 Ada (20GB): Level 1 removed to save VRAM (~3GB per GPU)
     dropout: 0.15  # INCREASED: More dropout for better generalization (was 0.1)
-    sampling_steps: 50  # DDIM sampling steps (50 is fast, 1000 is slow but better)
+    sampling_steps: 100  # Generation quality: 50=fast, 100=good, 250=best (nur Generation, nicht Training!)
 
 # Training Settings
 training:
-  batch_size: 4  # Multi-GPU: 4 per GPU × 4 GPUs = effective 16 (was 2 for single GPU)
+  batch_size: 3  # RTX 4000 Ada (20GB): 3 per GPU × 4 GPUs = effective 12 (sweet spot für 20GB)
   num_epochs: 400  # INCREASED: Even more epochs for fine details
   learning_rate: 0.00002  # FURTHER REDUCED: Much slower learning for structural consistency (was 0.00005)
   weight_decay: 0.00001
@@ -79,14 +79,14 @@ training:
 generation:
   num_samples: 1
   temperature: 1.0
-  guidance_scale: 3.0  # CFG: 1.0=no guidance, 3.0=balanced, 7.5=strong text adherence
+  guidance_scale: 3.5  # CFG: 1.0=no guidance, 3.5=balanced (RTX 4000 optimiert), 7.5=strong
   
 # Hardware
 hardware:
   device: "cuda"  # cuda or cpu
-  num_workers: 8  # Data loading workers (0 for main process only)
+  num_workers: 0  # RTX 4000 Ada: 0 für VRAM safety (war 8)
   precision: 16  # 16 for mixed precision, 32 for full precision
-  num_gpus: 4  # Multi-GPU: 4 GPUs for parallel training (was 1)
+  num_gpus: 4  # Multi-GPU: 4x RTX 4000 Ada (20GB each)
   
 # Block vocabulary (most common Minecraft blocks in nature assets)
 # Note: mcschematic uses "_wood" not "_log" for tree trunks!
