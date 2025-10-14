@@ -227,6 +227,25 @@ class SchematicParser:
         return bytes(result)
 
 
+def create_schematic(voxel_data: np.ndarray, block_id_to_name: Dict[int, str], output_path: str):
+    """
+    Create a .schem file from voxel data
+    
+    Args:
+        voxel_data: 3D numpy array of block IDs (D, H, W)
+        block_id_to_name: Dictionary mapping block IDs to block names
+        output_path: Path where to save the .schem file
+    """
+    # Create reverse vocabulary (name -> id)
+    block_name_to_id = {v: k for k, v in block_id_to_name.items()}
+    
+    # Create parser instance
+    parser = SchematicParser(block_name_to_id)
+    
+    # Use the parser's create_schematic method
+    parser.create_schematic(voxel_data, Path(output_path))
+
+
 def test_parser():
     """Test the schematic parser"""
     from pathlib import Path
