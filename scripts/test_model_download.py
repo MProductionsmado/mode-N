@@ -28,6 +28,10 @@ def download_with_hub():
     try:
         from huggingface_hub import snapshot_download
         
+        # Disable hf_transfer to avoid dependency issues
+        if 'HF_HUB_ENABLE_HF_TRANSFER' in os.environ:
+            del os.environ['HF_HUB_ENABLE_HF_TRANSFER']
+        
         model_id = "sentence-transformers/all-MiniLM-L6-v2"
         cache_dir = os.path.expanduser("~/.cache/huggingface")
         
@@ -36,8 +40,7 @@ def download_with_hub():
         
         local_path = snapshot_download(
             repo_id=model_id,
-            cache_dir=cache_dir,
-            resume_download=True
+            cache_dir=cache_dir
         )
         
         print(f"✓ Model downloaded to: {local_path}")
@@ -53,12 +56,21 @@ def test_sentence_transformers(model_path=None):
     try:
         from sentence_transformers import SentenceTransformer
         
+        # Disable hf_transfer to avoid dependency issues
+        if 'HF_HUB_ENABLE_HF_TRANSFER' in os.environ:
+            del os.environ['HF_HUB_ENABLE_HF_TRANSFER']
+        
         if model_path:
             print(f"Loading from local path: {model_path}")
             model = SentenceTransformer(model_path)
         else:
-            print("Loading model: all-MiniLM-L6-v2")
-            model = SentenceTransformer('all-MiniLM-L6-v2')
+            # Try different model name formats
+            print("Loading model: sentence-transformers/all-MiniLM-L6-v2")
+            try:
+                model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
+            except:
+                print("Trying alternative format: all-MiniLM-L6-v2")
+                model = SentenceTransformer('all-MiniLM-L6-v2')
         
         # Test encoding
         test_text = "oak tree with green leaves"

@@ -7,6 +7,9 @@ echo "Minecraft 3D AI - RunPod Setup"
 echo "=========================================="
 echo ""
 
+# Disable hf_transfer to avoid dependency issues
+unset HF_HUB_ENABLE_HF_TRANSFER
+
 # Set Hugging Face cache to persistent storage
 export HF_HOME=/workspace/.cache/huggingface
 export TRANSFORMERS_CACHE=/workspace/.cache/huggingface/transformers
@@ -15,6 +18,7 @@ export HF_HUB_DISABLE_SYMLINKS_WARNING=1
 
 echo "✓ Environment variables set"
 echo "  HF_HOME=$HF_HOME"
+echo "  HF_HUB_ENABLE_HF_TRANSFER=<unset>"
 echo ""
 
 # Create cache directories
@@ -41,10 +45,14 @@ echo "✓ Dependencies installed"
 # Download sentence-transformers model
 echo ""
 echo "Downloading sentence-transformers model..."
-python3 scripts/download_model.py
+python3 scripts/download_model_simple.py
 
 if [ $? -ne 0 ]; then
     echo "❌ Failed to download model!"
+    echo ""
+    echo "Try manually:"
+    echo "  unset HF_HUB_ENABLE_HF_TRANSFER"
+    echo "  python3 scripts/download_model_simple.py"
     exit 1
 fi
 
