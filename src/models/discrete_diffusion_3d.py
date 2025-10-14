@@ -570,10 +570,10 @@ class DiscreteDiscreteDiffusionModel3D(nn.Module):
     def _posterior_sample(self, x_t: torch.Tensor, x_0_pred: torch.Tensor, t: torch.Tensor) -> torch.Tensor:
         """Helper to sample from posterior (reuse existing logic)"""
         # Get alpha values
-        alpha_t = self.alpha[t][:, None, None, None, None]
+        alpha_t = self.alphas[t][:, None, None, None, None]
         alpha_t_minus_1 = torch.where(
             t[:, None, None, None, None] > 0,
-            self.alpha[t - 1][:, None, None, None, None],
+            self.alphas[t - 1][:, None, None, None, None],
             torch.ones_like(alpha_t)
         )
         
