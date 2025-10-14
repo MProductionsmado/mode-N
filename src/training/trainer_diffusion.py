@@ -152,10 +152,17 @@ def create_trainer(config: Dict, logger_name: str = "minecraft_diffusion") -> pl
     callbacks.append(lr_monitor)
     
     # Create trainer
+    # devices=-1 uses ALL available GPUs automatically
+    # devices=1 uses single GPU (default)
+    # devices=[0,1,2] uses specific GPUs
+    num_devices = config['hardware'].get('num_gpus', 1)  # Default: single GPU
+    strategy = 'ddp' if num_devices > 1 or num_devices == -1 else 'auto'
+    
     trainer = pl.Trainer(
         max_epochs=config['training']['num_epochs'],
         accelerator='gpu' if config['hardware']['device'] == 'cuda' else 'cpu',
-        devices=1,
+        devices=num_devices,  # Support multi-GPU
+        strategy=strategy,  # DDP for multi-GPU
         precision=config['hardware']['precision'],
         callbacks=callbacks,
         log_every_n_steps=config['training']['log_every_n_steps'],
