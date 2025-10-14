@@ -1,0 +1,136 @@
+{
+  "total_files": 16993,
+  "unique_tags": 52,
+  "top_tags": [
+    [
+      "tree",
+      2558
+    ],
+    [
+      "leaves",
+      2532
+    ],
+    [
+      "wood",
+      2506
+    ],
+    [
+      "oak",
+      2123
+    ],
+    [
+      "spruce",
+      1561
+    ],
+    [
+      "birch",
+      1168
+    ],
+    [
+      "bush",
+      1063
+    ],
+    [
+      "pine",
+      656
+    ],
+    [
+      "fall",
+      457
+    ],
+    [
+      "snowy",
+      440
+    ],
+    [
+      "grass",
+      350
+    ],
+    [
+      "jungle",
+      307
+    ],
+    [
+      "dark",
+      170
+    ],
+    [
+      "andesite",
+      129
+    ],
+    [
+      "mushroom",
+      114
+    ],
+    [
+      "rock",
+      109
+    ],
+    [
+      "acacia",
+      93
+    ],
+    [
+      "gray",
+      82
+    ],
+    [
+      "light",
+      79
+    ],
+    [
+      "concrete",
+      79
+    ]
+  ],
+  "unique_materials": 12,
+  "top_materials": [
+    [
+      "leaves",
+      2532
+    ],
+    [
+      "wood",
+      2506
+    ],
+    [
+      "oak",
+      2123
+    ],
+    [
+      "spruce",
+      1561
+    ],
+    [
+      "birch",
+      1168
+    ],
+    [
+      "grass",
+      350
+    ],
+    [
+      "jungle",
+      307
+    ],
+    [
+      "acacia",
+      93
+    ],
+    [
+      "log",
+      58
+    ],
+    [
+      "stone",
+      53
+    ]
+  ],
+  "size_distribution": {
+    "normal": 1555,
+    "big": 1829,
+    "huge": 1206
+  },
+  "files_with_uuid": 1824,
+  "files_without_uuid": 2766
+}

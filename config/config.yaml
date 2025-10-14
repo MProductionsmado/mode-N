@@ -1,0 +1,118 @@
+# Configuration for Minecraft 3D Asset Generator
+
+# Data Settings
+data:
+  input_dir: "out"
+  output_dir: "data"
+  processed_dir: "data/processed"
+  train_split: 0.8
+  val_split: 0.1
+  test_split: 0.1
+  random_seed: 42
+
+# Model Architecture
+model:
+  # Size configurations
+  sizes:
+    normal:
+      dims: [16, 16, 16]
+      latent_dim: 128
+    big:
+      dims: [16, 32, 16]
+      latent_dim: 192
+    huge:
+      dims: [24, 64, 24]
+      latent_dim: 256
+  
+  # Text encoder
+  text_encoder:
+    model_name: "all-MiniLM-L6-v2"  # Sentence-BERT model
+    embedding_dim: 384
+    
+  # 3D Encoder/Decoder
+  encoder:
+    channels: [64, 128, 256, 512]
+    kernel_size: 4
+    stride: 2
+    padding: 1
+    
+  decoder:
+    channels: [512, 256, 128, 64]
+    kernel_size: 4
+    stride: 2
+    padding: 1
+    output_activation: "softmax"  # For block type prediction
+    
+  # VAE parameters
+  vae:
+    beta: 0.5  # KL divergence weight
+    kl_annealing: true
+    kl_annealing_epochs: 50
+
+# Training Settings
+training:
+  batch_size: 16
+  num_epochs: 200
+  learning_rate: 0.0001
+  weight_decay: 0.00001
+  
+  # Optimizer
+  optimizer: "adam"
+  scheduler: "cosine"
+  warmup_epochs: 10
+  
+  # Checkpointing
+  save_every_n_epochs: 10
+  checkpoint_dir: "models"
+  
+  # Early stopping
+  early_stopping:
+    enabled: true
+    patience: 20
+    monitor: "val_loss"
+    
+  # Logging
+  log_dir: "logs"
+  log_every_n_steps: 50
+  
+# Generation Settings
+generation:
+  num_samples: 1
+  temperature: 1.0
+  guidance_scale: 1.0  # Classifier-free guidance weight
+  
+# Hardware
+hardware:
+  device: "cuda"  # cuda or cpu
+  num_workers: 0  # Set to 0 on Windows to avoid multiprocessing issues
+  precision: 16  # 16 for mixed precision, 32 for full precision
+  
+# Block vocabulary (most common Minecraft blocks in nature assets)
+blocks:
+  air: 0
+  oak_log: 1
+  oak_leaves: 2
+  birch_log: 3
+  birch_leaves: 4
+  spruce_log: 5
+  spruce_leaves: 6
+  acacia_log: 7
+  acacia_leaves: 8
+  dark_oak_log: 9
+  dark_oak_leaves: 10
+  oak_planks: 11
+  birch_planks: 12
+  grass_block: 13
+  dirt: 14
+  coarse_dirt: 15
+  podzol: 16
+  stone: 17
+  cobblestone: 18
+  mossy_cobblestone: 19
+  vine: 20
+  bee_nest: 21
+  beehive: 22
+  mushroom_stem: 23
+  brown_mushroom_block: 24
+  red_mushroom_block: 25
+  # Add more as needed

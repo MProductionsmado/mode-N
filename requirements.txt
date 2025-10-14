@@ -1,0 +1,30 @@
+# Minecraft 3D Asset Generator - Dependencies
+
+# Deep Learning
+torch>=2.0.0
+torchvision>=0.15.0
+pytorch-lightning>=2.0.0
+tensorboard>=2.13.0
+
+# NBT and Minecraft
+nbtlib>=2.0.4
+
+# Data Processing
+numpy>=1.24.0
+scipy>=1.10.0
+pandas>=2.0.0
+
+# NLP for text embeddings
+sentence-transformers>=2.2.2
+transformers>=4.30.0
+
+# Visualization
+matplotlib>=3.7.0
+plotly>=5.14.0
+pillow>=9.5.0
+
+# Utilities
+tqdm>=4.65.0
+pyyaml>=6.0
+scikit-learn>=1.2.0
+wandb>=0.15.0  # Optional: for experiment tracking
