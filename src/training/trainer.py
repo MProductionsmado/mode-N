@@ -41,7 +41,7 @@ class VAELightningModule(pl.LightningModule):
         wood_blocks = ['oak_wood', 'birch_wood', 'spruce_wood', 'jungle_wood', 'acacia_wood', 'dark_oak_wood']
         for block_name in wood_blocks:
             if block_name in config['blocks']:
-                idx = config['blocks'].index(block_name)
+                idx = config['blocks'][block_name]  # Get ID from dictionary
                 class_weights[idx] = 3.0
         
         # Create loss
