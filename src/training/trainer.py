@@ -61,6 +61,22 @@ class VAELightningModule(pl.LightningModule):
             raise ValueError(f"Mixed sizes in training batch: {unique_sizes}")
         size_name = size_names[0]
         
+        # DEBUG: Check if size_name matches actual voxel dimensions
+        actual_shape = voxels.shape  # (B, C, D, H, W)
+        expected_shapes = {
+            'normal': (16, 16, 16),
+            'big': (16, 32, 16),
+            'huge': (24, 64, 24)
+        }
+        expected = expected_shapes[size_name]
+        actual = actual_shape[2:]  # Skip batch and channel dimensions
+        
+        if actual != expected:
+            raise ValueError(
+                f"Size mismatch! size_name='{size_name}' expects {expected} "
+                f"but voxels have shape {actual_shape} (spatial: {actual})"
+            )
+        
         # Forward pass
         recon, mu, logvar = self(voxels, text_emb, size_name)
         
