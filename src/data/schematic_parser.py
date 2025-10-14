@@ -196,7 +196,7 @@ class SchematicParser:
             'Height': Short(height),
             'Length': Short(length),
             'Palette': Compound({palette[i]: Int(i) for i in set(blocks_flat) if i in palette}),
-            'BlockData': ByteArray(block_data),
+            'BlockData': ByteArray(list(block_data)),
             'Metadata': Compound({
                 'WEOffsetX': Int(0),
                 'WEOffsetY': Int(0),
