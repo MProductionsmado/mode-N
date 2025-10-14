@@ -247,31 +247,62 @@ class VoxelAugmentation(nn.Module):
         return voxels
 
 
-def size_aware_collate(batch):
+class SizeGroupedBatchSampler:
     """
-    Custom collate function that only batches samples of the same size.
-    If samples have different sizes, it will filter to keep only the most common size.
+    Batch sampler that groups samples by size category.
+    Ensures all samples in a batch have the same size.
     """
-    # Group by size
-    size_groups = {}
-    for item in batch:
-        size_name = item['size_name']
-        if size_name not in size_groups:
-            size_groups[size_name] = []
-        size_groups[size_name].append(item)
+    def __init__(self, dataset, batch_size, shuffle=True, drop_last=False):
+        self.dataset = dataset
+        self.batch_size = batch_size
+        self.shuffle = shuffle
+        self.drop_last = drop_last
+        
+        # Group indices by size
+        self.size_to_indices = {'normal': [], 'big': [], 'huge': []}
+        for idx, item in enumerate(dataset.metadata):
+            self.size_to_indices[item['size']].append(idx)
+        
+        logger.info(f"Size distribution: " + 
+                   ", ".join([f"{k}={len(v)}" for k, v in self.size_to_indices.items()]))
     
-    # Use the largest group
-    largest_group = max(size_groups.values(), key=len)
+    def __iter__(self):
+        # Create batches for each size category
+        all_batches = []
+        
+        for size_name, indices in self.size_to_indices.items():
+            if len(indices) == 0:
+                continue
+                
+            # Shuffle indices if needed
+            if self.shuffle:
+                indices = indices.copy()
+                import random
+                random.shuffle(indices)
+            
+            # Create batches
+            for i in range(0, len(indices), self.batch_size):
+                batch = indices[i:i + self.batch_size]
+                if len(batch) == self.batch_size or not self.drop_last:
+                    all_batches.append(batch)
+        
+        # Shuffle batches if needed
+        if self.shuffle:
+            import random
+            random.shuffle(all_batches)
+        
+        # Yield batches
+        for batch in all_batches:
+            yield batch
     
-    # Now collate the largest group
-    collated = {}
-    collated['voxels'] = torch.stack([item['voxels'] for item in largest_group])
-    collated['text_embedding'] = torch.stack([item['text_embedding'] for item in largest_group])
-    collated['size'] = torch.stack([item['size'] for item in largest_group])
-    collated['size_name'] = [item['size_name'] for item in largest_group]
-    collated['prompt'] = [item['prompt'] for item in largest_group]
-    
-    return collated
+    def __len__(self):
+        total = 0
+        for indices in self.size_to_indices.values():
+            if self.drop_last:
+                total += len(indices) // self.batch_size
+            else:
+                total += (len(indices) + self.batch_size - 1) // self.batch_size
+        return total
 
 
 def create_dataloaders(
@@ -319,26 +350,37 @@ def create_dataloaders(
     # Determine if we should use pin_memory (only on CUDA)
     use_pin_memory = torch.cuda.is_available()
     
-    # Create dataloaders with custom collate function
-    train_loader = DataLoader(
+    # Create custom batch samplers that group by size
+    train_batch_sampler = SizeGroupedBatchSampler(
         train_dataset,
         batch_size=batch_size,
         shuffle=True,
+        drop_last=True
+    )
+    
+    val_batch_sampler = SizeGroupedBatchSampler(
+        val_dataset,
+        batch_size=batch_size,
+        shuffle=False,
+        drop_last=False
+    )
+    
+    # Create dataloaders with batch samplers
+    # Note: When using batch_sampler, we don't specify batch_size, shuffle, or drop_last
+    train_loader = DataLoader(
+        train_dataset,
+        batch_sampler=train_batch_sampler,
         num_workers=num_workers,
         pin_memory=use_pin_memory,
-        drop_last=True,
-        persistent_workers=True if num_workers > 0 else False,
-        collate_fn=size_aware_collate
+        persistent_workers=True if num_workers > 0 else False
     )
     
     val_loader = DataLoader(
         val_dataset,
-        batch_size=batch_size,
-        shuffle=False,
+        batch_sampler=val_batch_sampler,
         num_workers=num_workers,
         pin_memory=use_pin_memory,
-        persistent_workers=True if num_workers > 0 else False,
-        collate_fn=size_aware_collate
+        persistent_workers=True if num_workers > 0 else False
     )
     
     test_loader = None
@@ -351,14 +393,19 @@ def create_dataloaders(
             num_classes=num_blocks
         )
         
-        test_loader = DataLoader(
+        test_batch_sampler = SizeGroupedBatchSampler(
             test_dataset,
             batch_size=batch_size,
             shuffle=False,
+            drop_last=False
+        )
+        
+        test_loader = DataLoader(
+            test_dataset,
+            batch_sampler=test_batch_sampler,
             num_workers=num_workers,
             pin_memory=use_pin_memory,
-            persistent_workers=True if num_workers > 0 else False,
-            collate_fn=size_aware_collate
+            persistent_workers=True if num_workers > 0 else False
         )
     
     logger.info(f"Created dataloaders: Train={len(train_dataset)}, "
