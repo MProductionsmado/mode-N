@@ -287,6 +287,12 @@ class ConditionalVAE3D(nn.Module):
             mu: (B, latent_dim) latent mean
             logvar: (B, latent_dim) latent log variance
         """
+        # DEBUG: Verify size_name is in the dictionaries
+        if size_name not in self.encoders:
+            raise KeyError(f"size_name '{size_name}' not found in encoders. Available: {list(self.encoders.keys())}")
+        if size_name not in self.decoders:
+            raise KeyError(f"size_name '{size_name}' not found in decoders. Available: {list(self.decoders.keys())}")
+        
         # Encode
         encoder = self.encoders[size_name]
         mu, logvar = encoder(voxels)
@@ -297,6 +303,15 @@ class ConditionalVAE3D(nn.Module):
         # Decode
         decoder = self.decoders[size_name]
         reconstruction = decoder(z, text_emb)
+        
+        # DEBUG: Check output size
+        expected_size = self.config['model']['sizes'][size_name]['dims']
+        actual_size = reconstruction.shape[2:]  # Skip batch and channel
+        if tuple(actual_size) != tuple(expected_size):
+            raise ValueError(
+                f"Decoder output size mismatch for '{size_name}'! "
+                f"Expected {expected_size}, got {tuple(actual_size)}"
+            )
         
         return reconstruction, mu, logvar
     
