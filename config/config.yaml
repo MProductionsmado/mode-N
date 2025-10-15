@@ -50,9 +50,9 @@ model:
 
 # Training Settings
 training:
-  batch_size: 4  # Keep at 4 for VRAM (24GB limit with attention)
+  batch_size: 8  # Doubled for speed (2x faster training)
   num_epochs: 400  # INCREASED: Even more epochs for fine details
-  learning_rate: 0.00002  # RESTORED: This worked well at Epoch 67! (was 0.0000075)
+  learning_rate: 0.00004  # DOUBLED: Must scale with batch_size (was 0.00002 at batch=4)
   weight_decay: 0.00001
   
   # Optimizer
