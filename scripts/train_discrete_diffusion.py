@@ -20,6 +20,10 @@ from src.training.trainer_discrete_diffusion import DiscreteDiffusionLightningMo
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
+# Enable Tensor Cores for 2-3× faster training on RTX 4090!
+# 'high' = TF32 precision (same quality, much faster)
+torch.set_float32_matmul_precision('high')
+
 
 def main():
     parser = argparse.ArgumentParser(description='Train Discrete Diffusion Model')
