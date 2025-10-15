@@ -50,9 +50,9 @@ model:
 
 # Training Settings
 training:
-  batch_size: 8  # REDUCED: Attention at level 1 needs much more VRAM (was 8)
+  batch_size: 10  # REDUCED: Attention at level 1 needs much more VRAM (was 8)
   num_epochs: 400  # INCREASED: Even more epochs for fine details
-  learning_rate: 0.00001  # FURTHER REDUCED: Much slower learning for structural consistency (was 0.00005)
+  learning_rate: 0.0000075  # FURTHER REDUCED: Much slower learning for structural consistency (was 0.00005)
   weight_decay: 0.00001
   
   # Optimizer
@@ -114,23 +114,23 @@ blocks:
   moss_carpet: 21
   dandelion: 22
   poppy: 23
-  pink_tulip: 29
-  oxeye_daisy: 30
-  sunflower: 31
-  peony: 32
-  pink_petals: 33
-  brown_mushroom: 34
-  red_mushroom: 35
-  brown_mushroom_block: 36
-  stone: 37
-  cobblestone: 38
-  mossy_cobblestone: 39
-  andesite: 40
-  granite: 41
-  diorite: 42
-  dirt: 43
-  coarse_dirt: 44
-  snow: 45
-  snow_block: 46
-  ice: 47
-  cactus: 48
+  pink_tulip: 24
+  oxeye_daisy: 25
+  sunflower: 26
+  peony: 27
+  pink_petals: 28
+  brown_mushroom: 29
+  red_mushroom: 30
+  brown_mushroom_block: 31
+  stone: 32
+  cobblestone: 33
+  mossy_cobblestone: 34
+  andesite: 35
+  granite: 36
+  diorite: 37
+  dirt: 38
+  coarse_dirt: 39
+  snow: 40
+  snow_block: 41
+  ice: 42
+  cactus: 43
