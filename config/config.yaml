@@ -50,9 +50,9 @@ model:
 
 # Training Settings
 training:
-  batch_size: 12  # REDUCED: Attention at level 1 needs much more VRAM (was 8)
+  batch_size: 8  # REDUCED: Attention at level 1 needs much more VRAM (was 8)
   num_epochs: 400  # INCREASED: Even more epochs for fine details
-  learning_rate: 0.00002  # FURTHER REDUCED: Much slower learning for structural consistency (was 0.00005)
+  learning_rate: 0.00001  # FURTHER REDUCED: Much slower learning for structural consistency (was 0.00005)
   weight_decay: 0.00001
   
   # Optimizer
@@ -107,48 +107,30 @@ blocks:
   jungle_log: 14
   dark_oak_log: 15
   acacia_log: 16
-  tall_grass: 17
-  short_grass: 18
-  fern: 19
-  grass_block: 20
-  moss_block: 21
-  moss_carpet: 22
-  dandelion: 23
-  poppy: 24
-  blue_orchid: 25
-  allium: 26
-  azure_bluet: 27
-  red_tulip: 28
-  white_tulip: 29
-  pink_tulip: 30
-  oxeye_daisy: 31
-  sunflower: 32
-  peony: 33
-  pink_petals: 34
-  brown_mushroom: 35
-  red_mushroom: 36
-  brown_mushroom_block: 37
-  stone: 38
-  cobblestone: 39
-  mossy_cobblestone: 40
-  andesite: 41
-  granite: 42
-  diorite: 43
-  dirt: 44
-  coarse_dirt: 45
-  snow: 46
-  snow_block: 47
-  ice: 48
-  packed_ice: 49
-  cactus: 50
-  vine: 51
-  lily_pad: 52
-  dead_bush: 53
-  oak_sapling: 54
-  spruce_sapling: 55
-  birch_sapling: 56
-  jungle_sapling: 57
-  dark_oak_sapling: 58
-  acacia_sapling: 59
-  azalea: 60
-  flowering_azalea: 61
+  short_grass: 17
+  fern: 18
+  grass_block: 19
+  moss_block: 20
+  moss_carpet: 21
+  dandelion: 22
+  poppy: 23
+  pink_tulip: 29
+  oxeye_daisy: 30
+  sunflower: 31
+  peony: 32
+  pink_petals: 33
+  brown_mushroom: 34
+  red_mushroom: 35
+  brown_mushroom_block: 36
+  stone: 37
+  cobblestone: 38
+  mossy_cobblestone: 39
+  andesite: 40
+  granite: 41
+  diorite: 42
+  dirt: 43
+  coarse_dirt: 44
+  snow: 45
+  snow_block: 46
+  ice: 47
+  cactus: 48
