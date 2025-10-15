@@ -50,9 +50,9 @@ model:
 
 # Training Settings
 training:
-  batch_size: 10  # REDUCED: Attention at level 1 needs much more VRAM (was 8)
+  batch_size: 4  # Keep at 4 for VRAM (24GB limit with attention)
   num_epochs: 400  # INCREASED: Even more epochs for fine details
-  learning_rate: 0.0000075  # FURTHER REDUCED: Much slower learning for structural consistency (was 0.00005)
+  learning_rate: 0.00002  # RESTORED: This worked well at Epoch 67! (was 0.0000075)
   weight_decay: 0.00001
   
   # Optimizer
