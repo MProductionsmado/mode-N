@@ -1,5 +1,5 @@
 {
-  "total_files": 16993,
+  "total_files": 16995,
   "unique_tags": 52,
   "top_tags": [
     [
@@ -32,7 +32,7 @@
     ],
     [
       "pine",
-      656
+      657
     ],
     [
       "fall",
@@ -40,7 +40,7 @@
     ],
     [
       "snowy",
-      440
+      441
     ],
     [
       "grass",
@@ -127,8 +127,8 @@
     ]
   ],
   "size_distribution": {
-    "normal": 1555,
-    "big": 1829,
+    "normal": 1554,
+    "big": 1830,
     "huge": 1206
   },
   "files_with_uuid": 1824,
