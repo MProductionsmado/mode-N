@@ -427,34 +427,70 @@ class DiscreteDiscreteDiffusionModel3D(nn.Module):
         t: torch.Tensor,
         text_embed: torch.Tensor,
         text_proj: torch.Tensor,
-        size: str
+        size: str,
+        guidance_scale: float = 1.0
     ) -> torch.Tensor:
         """
-        Reverse diffusion: p(x_{t-1} | x_t)
+        Reverse diffusion: p(x_{t-1} | x_t) with Classifier-Free Guidance
         Single denoising step for discrete data
+        
+        Args:
+            x: Current noisy state (B, C, D, H, W)
+            t: Timestep (B,)
+            text_embed: Text embeddings (B, text_dim)
+            text_proj: Projected text embeddings (B, proj_dim)
+            size: Size category
+            guidance_scale: CFG strength (1.0 = no guidance, 7.5 = strong)
         """
-        # Predict logits for x_0 (clean data estimate)
         time_embed = self.time_embed(t.float())
-        predicted_logits = self.unets[size](x, time_embed, text_proj)
+        
+        # Conditional prediction
+        predicted_logits_cond = self.unets[size](x, time_embed, text_proj)
+        
+        # Classifier-Free Guidance
+        if guidance_scale != 1.0:
+            # Unconditional prediction (zero text embedding)
+            text_proj_uncond = torch.zeros_like(text_proj)
+            predicted_logits_uncond = self.unets[size](x, time_embed, text_proj_uncond)
+            
+            # CFG: logits = uncond + scale * (cond - uncond)
+            predicted_logits = predicted_logits_uncond + guidance_scale * (
+                predicted_logits_cond - predicted_logits_uncond
+            )
+        else:
+            predicted_logits = predicted_logits_cond
 
-        # Estimate x_0 distribution
+        # Estimate x_0 distribution from logits
         x_0_pred = F.softmax(predicted_logits, dim=1)
 
         if t[0] > 0:
-            # Previous cumulative alpha (probability of staying in same state up to t-1)
+            # Get alpha values for proper posterior calculation
+            alpha_cumprod_t = self.alphas_cumprod[t]
             alpha_cumprod_t_prev = self.alphas_cumprod[t - 1]
-            while len(alpha_cumprod_t_prev.shape) < len(x.shape):
+            
+            # Reshape for broadcasting
+            while len(alpha_cumprod_t.shape) < len(x.shape):
+                alpha_cumprod_t = alpha_cumprod_t.unsqueeze(-1)
                 alpha_cumprod_t_prev = alpha_cumprod_t_prev.unsqueeze(-1)
-
-            # Prior over x_{t-1} constructed from predicted clean data
+            
+            # Correct posterior calculation for multinomial diffusion
+            # q(x_{t-1} | x_t, x_0) using Bayes rule
+            
+            # Transition probabilities from x_0 to x_{t-1}
             stay_prob_prev = alpha_cumprod_t_prev
             uniform_prob_prev = (1.0 - alpha_cumprod_t_prev) / self.num_classes
-            prior_prev = x_0_pred * stay_prob_prev + uniform_prob_prev
-
-            # Incorporate current noisy state x (acts like likelihood term)
-            # Element-wise product then renormalize
-            posterior_unnorm = prior_prev * (x + 1e-8)
-            posterior = posterior_unnorm / (posterior_unnorm.sum(dim=1, keepdim=True) + 1e-8)
+            q_t_prev_given_x0 = x_0_pred * stay_prob_prev + uniform_prob_prev
+            
+            # Transition probabilities from x_0 to x_t  
+            stay_prob_t = alpha_cumprod_t
+            uniform_prob_t = (1.0 - alpha_cumprod_t) / self.num_classes
+            q_t_given_x0 = x_0_pred * stay_prob_t + uniform_prob_t
+            
+            # Posterior: q(x_{t-1} | x_t, x_0) ∝ q(x_t | x_{t-1}) * q(x_{t-1} | x_0)
+            # For multinomial: this becomes element-wise product and renormalization
+            posterior_unnorm = q_t_prev_given_x0 * (x / (q_t_given_x0 + 1e-10))
+            posterior = posterior_unnorm / (posterior_unnorm.sum(dim=1, keepdim=True) + 1e-10)
+            
             return posterior
         else:
             # Final step: return categorical distribution for x_0
@@ -466,16 +502,18 @@ class DiscreteDiscreteDiffusionModel3D(nn.Module):
         text_embed: torch.Tensor,
         size: str,
         num_samples: int = 1,
-        sampling_steps: Optional[int] = None
+        sampling_steps: Optional[int] = None,
+        guidance_scale: float = 7.5
     ) -> torch.Tensor:
         """
-        Generate samples using reverse diffusion
+        Generate samples using reverse diffusion with Classifier-Free Guidance
         
         Args:
             text_embed: Text embeddings (B, text_embed_dim)
             size: Size category
             num_samples: Number of samples
             sampling_steps: Number of steps (None = all timesteps)
+            guidance_scale: CFG strength (1.0 = no guidance, 7.5 = strong)
         
         Returns:
             Generated one-hot voxels (B, C, D, H, W)
@@ -501,9 +539,9 @@ class DiscreteDiscreteDiffusionModel3D(nn.Module):
                 self.num_timesteps - 1, 0, sampling_steps, dtype=torch.long, device=device
             ).tolist()
         
-        # Iterative denoising
+        # Iterative denoising with CFG
         for t in timesteps:
             t_batch = torch.full((num_samples,), t, device=device, dtype=torch.long)
-            x = self.p_sample(x, t_batch, text_embed, text_proj, size)
+            x = self.p_sample(x, t_batch, text_embed, text_proj, size, guidance_scale=guidance_scale)
         
         return x
