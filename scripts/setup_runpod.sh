@@ -31,7 +31,13 @@ pip install pytorch-lightning sentence-transformers pyyaml nbtlib numpy
 
 # 4. Download Sentence-Transformers model
 echo "🤖 Downloading Sentence-Transformers model..."
+python3 -m venv venv
+source venv/bin/activate
+pip install --upgrade pip
+pip install -r requirements.txt
+unset HF_HUB_ENABLE_HF_TRANSFER
 python3 scripts/download_model.py
+python scripts/preprocess_data.py
 
 # 5. Create models directory
 echo "📁 Creating models directory..."

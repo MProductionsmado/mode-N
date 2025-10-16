@@ -43,16 +43,16 @@ model:
     beta_start: 0.0001  # For linear schedule
     beta_end: 0.02  # For linear schedule
     time_embed_dim: 256  # Time embedding dimension
-    num_res_blocks: 2  # Residual blocks per level
+    num_res_blocks: 3  # Residual blocks per level
     attention_levels: [2, 3]  # Add attention at these UNet levels (deeper levels)
-    dropout: 0.1  # Dropout for regularization
+    dropout: 0.15  # Dropout for regularization
     sampling_steps: 50  # DDIM sampling steps (50 is fast, 1000 is slow but better)
 
 # Training Settings
 training:
   batch_size: 8  # Reduced for diffusion (UNet uses much more memory than VAE)
   num_epochs: 300  # INCREASED: More epochs for better spatial learning
-  learning_rate: 0.00005  # REDUCED: Slower learning for better long-range patterns (was 0.0001)
+  learning_rate: 0.00002  # REDUCED: Slower learning for better long-range patterns (was 0.0001)
   weight_decay: 0.00001
   
   # Optimizer
@@ -134,5 +134,4 @@ blocks:
   dandelion: 41
   azure_bluet: 42
   oxeye_daisy: 43
-  barrier: 44
   # Add more as needed
