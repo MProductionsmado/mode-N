@@ -84,7 +84,7 @@ generation:
 # Hardware
 hardware:
   device: "cuda"  # cuda or cpu
-  num_workers: 8  # Data loading workers (0 for main process only)
+  num_workers: 8  # Data loading workers - INCREASED from 4 to 8 (use more CPU cores)
   precision: 16  # 16 for mixed precision, 32 for full precision
   num_gpus: 1  # 1 for single GPU, -1 for ALL GPUs, [0,1,2] for specific GPUs
   

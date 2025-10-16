@@ -98,9 +98,8 @@ def main():
             }
     
     # Create dataloaders
-    # On RunPod: Use multiple workers for faster data loading
-    # On Windows: Use num_workers=0 to avoid multiprocessing issues
-    num_workers = 4  # Adjust based on CPU cores (RunPod has many cores)
+    # Get num_workers from config
+    num_workers = config['hardware'].get('num_workers', 8)
     
     train_loader = DataLoader(
         train_dataset,
@@ -109,7 +108,8 @@ def main():
         num_workers=num_workers,
         pin_memory=True,
         persistent_workers=True if num_workers > 0 else False,
-        collate_fn=size_aware_collate
+        collate_fn=size_aware_collate,
+        prefetch_factor=2  # Load 2 batches ahead per worker
     )
     
     val_loader = DataLoader(
@@ -119,7 +119,8 @@ def main():
         num_workers=num_workers,
         pin_memory=True,
         persistent_workers=True if num_workers > 0 else False,
-        collate_fn=size_aware_collate
+        collate_fn=size_aware_collate,
+        prefetch_factor=2  # Load 2 batches ahead per worker
     )
     
     # Create model

@@ -166,6 +166,7 @@ def create_trainer(config: Dict, logger_name: str = "minecraft_discrete_diffusio
         callbacks=callbacks,
         logger=TensorBoardLogger('lightning_logs', name=logger_name),
         gradient_clip_val=config['training'].get('gradient_clip_val', 1.0),
+        accumulate_grad_batches=2,  # Accumulate gradients over 2 batches (effective batch_size = 32)
         log_every_n_steps=10,
         deterministic=False  # For speed
     )
