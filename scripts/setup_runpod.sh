@@ -11,11 +11,4 @@ pip install -r requirements.txt
 unset HF_HUB_ENABLE_HF_TRANSFER
 python3 scripts/download_model.py
 python scripts/preprocess_data.py
-
-echo ""
-echo "✅ Setup complete! Ready to train."
-echo ""
-echo "To start training:"
-echo "  source venv/bin/activate"
-echo "  python3 scripts/train_diffusion.py"
-echo ""
+python scripts/train_discrete_diffusion.py
