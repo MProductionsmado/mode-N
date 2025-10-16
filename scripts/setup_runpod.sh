@@ -11,6 +11,7 @@ pip install -r requirements.txt
 unset HF_HUB_ENABLE_HF_TRANSFER
 python3 scripts/download_model.py
 python scripts/preprocess_data.py
+python scripts/train_discrete_diffusion.py
 
 echo ""
 echo "✅ Setup complete! Ready to train."

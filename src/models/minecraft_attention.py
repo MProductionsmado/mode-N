@@ -148,8 +148,18 @@ class MinecraftAwareAttention3D(nn.Module):
         if block_types is not None:
             attn = self._apply_minecraft_mask(attn, block_types, D, H, W)
         
-        # Softmax and dropout
+        # Clamp attention scores to prevent overflow/underflow
+        attn = torch.clamp(attn, min=-1e9, max=1e9)
+        
+        # Softmax with numerical stability
         attn = F.softmax(attn, dim=-1)
+        
+        # Replace any NaN with uniform attention (safety fallback)
+        if torch.isnan(attn).any():
+            print("[WARNING] NaN detected in attention, replacing with uniform")
+            nan_mask = torch.isnan(attn)
+            attn = torch.where(nan_mask, torch.ones_like(attn) / attn.shape[-1], attn)
+        
         attn = self.dropout(attn)
         
         # Apply attention to values
@@ -179,14 +189,20 @@ class MinecraftAwareAttention3D(nn.Module):
         """
         B, num_heads, N, _ = attn.shape
         
+        # Safety check: if block_types is all zeros or invalid, skip masking
+        if block_types.max() == 0 and block_types.min() == 0:
+            return attn
+        
         # Flatten block types
         block_flat = block_types.reshape(B, -1)  # (B, N)
         
         # --- 1. Mask out air blocks ---
         # Air blocks should not receive attention (they're empty space)
+        # IMPORTANT: Use a large negative number instead of -inf to avoid NaN
         air_mask = self.is_air[block_flat]  # (B, N)
         air_mask = air_mask[:, None, None, :].expand(-1, num_heads, N, -1)
-        attn = attn.masked_fill(air_mask.bool(), float('-inf'))
+        # Use -1e9 instead of -inf to prevent NaN when entire row is masked
+        attn = attn.masked_fill(air_mask.bool(), -1e9)
         
         # --- 2. Boost same-material attention ---
         # Wood blocks should attend more to other wood blocks
@@ -203,7 +219,9 @@ class MinecraftAwareAttention3D(nn.Module):
         
         # Combine boosts and expand for heads
         material_boost = (wood_boost + leaves_boost)[:, None, :, :].expand(-1, num_heads, -1, -1)
-        attn = attn + material_boost * self.same_material_boost
+        # Clamp boost to prevent extreme values
+        material_boost = torch.clamp(material_boost * self.same_material_boost, min=0, max=10.0)
+        attn = attn + material_boost
         
         # --- 3. Boost vertical attention for trees ---
         # Tree structures are mostly vertical (trunk from bottom to top)
@@ -222,8 +240,9 @@ class MinecraftAwareAttention3D(nn.Module):
         wood_vertical = wood_mask[:, :, None] * wood_mask[:, None, :]  # (B, N, N)
         vertical_boost = wood_vertical * vertical_mask[None, :, :]
         vertical_boost = vertical_boost[:, None, :, :].expand(-1, num_heads, -1, -1)
-        
-        attn = attn + vertical_boost * self.vertical_boost
+        # Clamp vertical boost to prevent extreme values
+        vertical_boost = torch.clamp(vertical_boost * self.vertical_boost, min=0, max=10.0)
+        attn = attn + vertical_boost
         
         return attn
 
