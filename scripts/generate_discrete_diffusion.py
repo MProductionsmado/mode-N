@@ -37,6 +37,8 @@ def main():
                        help='Number of samples to generate')
     parser.add_argument('--sampling-steps', type=int, default=50,
                        help='Number of denoising steps (50=fast, 1000=best quality)')
+    parser.add_argument('--guidance-scale', type=float, default=7.5,
+                       help='Classifier-Free Guidance scale (1.0=no guidance, 7.5=balanced, 15.0=very strong)')
     parser.add_argument('--temperature', type=float, default=1.0,
                        help='Temperature for sampling (<=0.3 more deterministic, >1.0 more diverse)')
     parser.add_argument('--sample-mode', type=str, default='argmax', choices=['argmax','multinomial'],
@@ -100,15 +102,17 @@ def main():
     # Generate
     logger.info(f"Generating {args.num_samples} sample(s)...")
     logger.info(f"Sampling steps: {args.sampling_steps}")
+    logger.info(f"Guidance scale: {args.guidance_scale}")
     
     with torch.no_grad():
-        # Generate using discrete diffusion
+        # Generate using discrete diffusion with CFG
         # Returns probabilities over classes (B, C, D, H, W)
         generated_probs = model.model.generate(
             text_embed=text_embed,
             size=size,
             num_samples=args.num_samples,
-            sampling_steps=args.sampling_steps
+            sampling_steps=args.sampling_steps,
+            guidance_scale=args.guidance_scale
         )
         
         if args.temperature != 1.0:

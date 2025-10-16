@@ -50,10 +50,11 @@ model:
 
 # Training Settings
 training:
-  batch_size: 8  # Reduced for diffusion (UNet uses much more memory than VAE)
+  batch_size: 16  # Reduced for diffusion (UNet uses much more memory than VAE)
   num_epochs: 300  # INCREASED: More epochs for better spatial learning
   learning_rate: 0.00002  # REDUCED: Slower learning for better long-range patterns (was 0.0001)
   weight_decay: 0.00001
+  cfg_dropout: 0.15  # Classifier-Free Guidance - drop text conditioning 15% of the time
   
   # Optimizer
   optimizer: "adam"
@@ -78,7 +79,7 @@ training:
 generation:
   num_samples: 1
   temperature: 1.0
-  guidance_scale: 1.0  # Classifier-free guidance weight
+  guidance_scale: 7.5  # Classifier-Free Guidance strength (1.0=off, 7.5=balanced, 15.0=strong)
   
 # Hardware
 hardware:
