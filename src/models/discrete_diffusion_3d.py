@@ -13,6 +13,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from typing import Dict, Tuple, Optional
 import math
+import os
 
 
 class SinusoidalPositionEmbeddings(nn.Module):
@@ -282,13 +283,16 @@ class DiscreteDiscreteDiffusionModel3D(nn.Module):
     """
     Discrete Diffusion Model using Multinomial Transitions
     Better for categorical data like Minecraft blocks
+    
+    Now with optional Minecraft-Aware Attention for better coherence!
     """
     
-    def __init__(self, config: Dict):
+    def __init__(self, config: Dict, use_minecraft_attention: bool = True):
         super().__init__()
         self.config = config
         self.num_classes = len(config['blocks'])
         self.num_timesteps = config['model']['diffusion']['num_timesteps']
+        self.use_minecraft_attention = use_minecraft_attention
         
         # Time embeddings
         time_embed_dim = 256
@@ -309,21 +313,49 @@ class DiscreteDiscreteDiffusionModel3D(nn.Module):
         cond_dim = time_embed_dim + text_proj_dim
         
         # Create UNets for each size
+        # Use Minecraft-aware attention if enabled
         self.unets = nn.ModuleDict()
-        for size_name, size_config in config['model']['sizes'].items():
-            self.unets[size_name] = UNet3D(
-                in_channels=self.num_classes,
-                out_channels=self.num_classes,  # Predict logits for each class
-                model_channels=config['model']['encoder']['channels'][0],
-                channel_multipliers=tuple(
-                    c // config['model']['encoder']['channels'][0] 
-                    for c in config['model']['encoder']['channels']
-                ),
-                num_res_blocks=config['model']['diffusion']['num_res_blocks'],
-                cond_dim=cond_dim,
-                attention_levels=tuple(config['model']['diffusion']['attention_levels']),
-                dropout=config['model']['diffusion']['dropout']
-            )
+        
+        if use_minecraft_attention:
+            print("\n" + "="*60)
+            print("🎮 MINECRAFT-AWARE ATTENTION ENABLED 🎮")
+            print("="*60)
+            from .unet_with_minecraft_attention import MinecraftUNet3D
+            
+            for size_name, size_config in config['model']['sizes'].items():
+                print(f"\n[{size_name.upper()}] Creating UNet with Minecraft attention...")
+                self.unets[size_name] = MinecraftUNet3D(
+                    in_channels=self.num_classes,
+                    out_channels=self.num_classes,
+                    blocks_dict=config['blocks'],
+                    model_channels=config['model']['encoder']['channels'][0],
+                    channel_multipliers=tuple(
+                        c // config['model']['encoder']['channels'][0] 
+                        for c in config['model']['encoder']['channels']
+                    ),
+                    num_res_blocks=config['model']['diffusion']['num_res_blocks'],
+                    cond_dim=cond_dim,
+                    attention_levels=tuple(config['model']['diffusion']['attention_levels']),
+                    dropout=config['model']['diffusion']['dropout'],
+                    use_minecraft_attention=True
+                )
+            print("="*60 + "\n")
+        else:
+            print("\n[INFO] Using standard attention (no Minecraft-specific optimizations)")
+            for size_name, size_config in config['model']['sizes'].items():
+                self.unets[size_name] = UNet3D(
+                    in_channels=self.num_classes,
+                    out_channels=self.num_classes,
+                    model_channels=config['model']['encoder']['channels'][0],
+                    channel_multipliers=tuple(
+                        c // config['model']['encoder']['channels'][0] 
+                        for c in config['model']['encoder']['channels']
+                    ),
+                    num_res_blocks=config['model']['diffusion']['num_res_blocks'],
+                    cond_dim=cond_dim,
+                    attention_levels=tuple(config['model']['diffusion']['attention_levels']),
+                    dropout=config['model']['diffusion']['dropout']
+                )
         
         # Transition matrix schedule (probability of staying in same state)
         # At t=0: almost always stay, at t=T: uniform distribution
