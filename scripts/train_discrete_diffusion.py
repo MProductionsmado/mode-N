@@ -98,14 +98,17 @@ def main():
             }
     
     # Create dataloaders
-    # Use num_workers=0 to avoid multiprocessing issues with tensor storage
+    # On RunPod: Use multiple workers for faster data loading
+    # On Windows: Use num_workers=0 to avoid multiprocessing issues
+    num_workers = 4  # Adjust based on CPU cores (RunPod has many cores)
+    
     train_loader = DataLoader(
         train_dataset,
         batch_size=config['training']['batch_size'],
         shuffle=True,
-        num_workers=0,
+        num_workers=num_workers,
         pin_memory=True,
-        persistent_workers=False,
+        persistent_workers=True if num_workers > 0 else False,
         collate_fn=size_aware_collate
     )
     
@@ -113,9 +116,9 @@ def main():
         val_dataset,
         batch_size=config['training']['batch_size'],
         shuffle=False,
-        num_workers=0,
+        num_workers=num_workers,
         pin_memory=True,
-        persistent_workers=False,
+        persistent_workers=True if num_workers > 0 else False,
         collate_fn=size_aware_collate
     )
     
