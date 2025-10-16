@@ -147,19 +147,23 @@ class MinecraftAwareAttention3D(nn.Module):
         # Apply Minecraft-aware masking (if block types provided)
         if block_types is not None:
             attn = self._apply_minecraft_mask(attn, block_types, D, H, W)
-        
-        # Clamp attention scores to prevent overflow/underflow
-        attn = torch.clamp(attn, min=-1e9, max=1e9)
-        
+
+        # Clamp attention scores to prevent overflow/underflow in mixed precision
+        # Use dtype-safe limits based on the attention tensor's dtype
+        finfo = torch.finfo(attn.dtype)
+        safe_min = finfo.min / 2.0
+        safe_max = finfo.max / 2.0
+        attn = torch.clamp(attn, min=safe_min, max=safe_max)
+
         # Softmax with numerical stability
         attn = F.softmax(attn, dim=-1)
-        
+
         # Replace any NaN with uniform attention (safety fallback)
         if torch.isnan(attn).any():
             print("[WARNING] NaN detected in attention, replacing with uniform")
             nan_mask = torch.isnan(attn)
             attn = torch.where(nan_mask, torch.ones_like(attn) / attn.shape[-1], attn)
-        
+
         attn = self.dropout(attn)
         
         # Apply attention to values
@@ -201,9 +205,12 @@ class MinecraftAwareAttention3D(nn.Module):
         # IMPORTANT: Use a large negative number instead of -inf to avoid NaN
         air_mask = self.is_air[block_flat]  # (B, N)
         air_mask = air_mask[:, None, None, :].expand(-1, num_heads, N, -1)
-        # Use -1e9 instead of -inf to prevent NaN when entire row is masked
-        attn = attn.masked_fill(air_mask.bool(), -1e9)
-        
+        # Use a dtype-safe negative fill value to prevent overflow in float16
+        finfo = torch.finfo(attn.dtype)
+        neg_fill = float(finfo.min / 4.0)  # well below range but safe to represent
+        neg_fill = torch.tensor(neg_fill, dtype=attn.dtype, device=attn.device)
+        attn = attn.masked_fill(air_mask.bool(), neg_fill)
+
         # --- 2. Boost same-material attention ---
         # Wood blocks should attend more to other wood blocks
         # Leaves blocks should attend more to other leaves blocks
