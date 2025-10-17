@@ -44,22 +44,22 @@ model:
     beta_end: 0.02  # For linear schedule
     time_embed_dim: 256  # Time embedding dimension
     num_res_blocks: 3  # Residual blocks per level
-    attention_levels: [2, 3]  # Add attention at these UNet levels (deeper levels)
-    dropout: 0.15  # Dropout for regularization
+    attention_levels: [2, 3]  # MORE attention - add at ALL deeper levels for better spatial learning
+    dropout: 0.1  # REDUCED from 0.15 - less dropout = faster learning
     sampling_steps: 50  # DDIM sampling steps (50 is fast, 1000 is slow but better)
 
 # Training Settings
 training:
   batch_size: 16  # INCREASED: A5000 has 24GB VRAM, utilize it better (was 8)
-  num_epochs: 300  # INCREASED: More epochs for better spatial learning
-  learning_rate: 0.00002  # REDUCED: Slower learning for better long-range patterns (was 0.0001)
+  num_epochs: 150  # INCREASED: More epochs for better spatial learning
+  learning_rate: 0.00005  # INCREASED from 0.00002 - faster learning for spatial patterns
   weight_decay: 0.00001
-  cfg_dropout: 0.15  # NEW: Classifier-Free Guidance - drop text conditioning 15% of the time
+  cfg_dropout: 0.1  # REDUCED from 0.15 - less aggressive dropout for faster convergence
   
   # Optimizer
   optimizer: "adam"
   scheduler: "cosine"
-  warmup_epochs: 10  # INCREASED: Gradual warmup for stable slow learning
+  warmup_epochs: 5  # REDUCED from 10 - faster warmup
   
   # Checkpointing
   save_every_n_epochs: 50
