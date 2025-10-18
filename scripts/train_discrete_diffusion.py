@@ -102,7 +102,7 @@ def main():
         train_dataset,
         batch_size=config['training']['batch_size'],
         shuffle=True,
-        num_workers=0,
+        num_workers=config['training']['num_workers'],
         pin_memory=True,
         persistent_workers=False,
         collate_fn=size_aware_collate
@@ -112,7 +112,7 @@ def main():
         val_dataset,
         batch_size=config['training']['batch_size'],
         shuffle=False,
-        num_workers=0,
+        num_workers=config['training']['num_workers'],
         pin_memory=True,
         persistent_workers=False,
         collate_fn=size_aware_collate

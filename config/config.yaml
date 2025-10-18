@@ -54,6 +54,7 @@ training:
   num_epochs: 400  # INCREASED: Even more epochs for fine details
   learning_rate: 0.00002  # FURTHER REDUCED: Much slower learning for structural consistency (was 0.00005)
   weight_decay: 0.00001
+  num_workers: 64
   
   # Optimizer
   optimizer: "adam"
