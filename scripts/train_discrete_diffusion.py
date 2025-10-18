@@ -20,6 +20,8 @@ from src.training.trainer_discrete_diffusion import DiscreteDiffusionLightningMo
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
+torch.set_float32_matmul_precision('medium')
+
 
 def main():
     parser = argparse.ArgumentParser(description='Train Discrete Diffusion Model')

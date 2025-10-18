@@ -50,7 +50,7 @@ model:
 
 # Training Settings
 training:
-  batch_size: 4  # REDUCED: Attention at level 1 needs much more VRAM (was 8)
+  batch_size: 8  # REDUCED: Attention at level 1 needs much more VRAM (was 8)
   num_epochs: 400  # INCREASED: Even more epochs for fine details
   learning_rate: 0.00002  # FURTHER REDUCED: Much slower learning for structural consistency (was 0.00005)
   weight_decay: 0.00001
@@ -91,48 +91,23 @@ hardware:
 # Note: mcschematic uses "_wood" not "_log" for tree trunks!
 blocks:
   air: 0
-  oak_wood: 1
-  oak_log: 2
-  oak_leaves: 3
-  birch_wood: 4
-  birch_log: 5
-  birch_leaves: 6
-  spruce_wood: 7
-  spruce_log: 8
-  spruce_leaves: 9
-  acacia_wood: 10
-  acacia_log: 11
-  acacia_leaves: 12
-  dark_oak_wood: 13
-  dark_oak_log: 14
-  dark_oak_leaves: 15
-  oak_planks: 16
-  birch_planks: 17
-  spruce_planks: 18
-  grass_block: 19
-  dirt: 20
-  coarse_dirt: 21
-  podzol: 22
-  stone: 23
-  cobblestone: 24
-  mossy_cobblestone: 25
-  vine: 26
-  bee_nest: 27
-  beehive: 28
-  mushroom_stem: 29
-  brown_mushroom_block: 30
-  red_mushroom_block: 31
-  yellow_stained_glass: 32
-  yellow_stained_glass_pane: 33
-  yellow_wool: 34
-  yellow_glazed_terracotta: 35
-  yellow_concrete: 36
-  orange_stained_glass: 37
-  orange_stained_glass_pane: 38
-  orange_wool: 39
-  orange_concrete: 40
-  dandelion: 41
-  azure_bluet: 42
-  oxeye_daisy: 43
-  snow: 44
-  # Add more as needed
+  oak_leaves: 1  # Count: 513,807
+  birch_leaves: 2  # Count: 122,651
+  jungle_leaves: 3  # Count: 114,375
+  spruce_leaves: 4  # Count: 103,554
+  oak_wood: 5  # Count: 86,032
+  snow: 6  # Count: 60,163
+  tall_grass: 7  # Count: 58,464
+  birch_wood: 8  # Count: 51,290
+  light_gray_concrete: 9  # Count: 40,949
+  spruce_wood: 10  # Count: 39,180
+  yellow_stained_glass_pane: 11  # Count: 38,470
+  sunflower: 12  # Count: 36,600
+  dark_oak_leaves: 13  # Count: 31,928
+  andesite: 14  # Count: 30,111
+  vine: 15  # Count: 24,225
+  yellow_wool: 16  # Count: 23,335
+  spruce_fence: 17  # Count: 21,864
+  yellow_glazed_terracotta: 18  # Count: 20,239
+  green_stained_glass_pane: 19  # Count: 19,967
+  yellow_concrete: 20  # Count: 19,942

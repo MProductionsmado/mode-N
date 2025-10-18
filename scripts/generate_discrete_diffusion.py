@@ -18,6 +18,7 @@ from src.data.schematic_parser import create_schematic
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+torch.set_float32_matmul_precision('medium')
 
 def main():
     parser = argparse.ArgumentParser(description='Generate Minecraft assets with Discrete Diffusion')
