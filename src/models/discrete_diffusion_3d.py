@@ -427,15 +427,33 @@ class DiscreteDiscreteDiffusionModel3D(nn.Module):
         t: torch.Tensor,
         text_embed: torch.Tensor,
         text_proj: torch.Tensor,
-        size: str
+        size: str,
+        guidance_scale: float = 1.0
     ) -> torch.Tensor:
         """
         Reverse diffusion: p(x_{t-1} | x_t)
-        Single denoising step for discrete data
+        Single denoising step for discrete data with Classifier-Free Guidance
+        
+        Args:
+            guidance_scale: CFG strength (1.0 = no guidance, >1.0 = stronger prompt following)
         """
         # Predict logits for x_0 (clean data estimate)
         time_embed = self.time_embed(t.float())
-        predicted_logits = self.unets[size](x, time_embed, text_proj)
+        
+        # Classifier-Free Guidance: conditional + unconditional prediction
+        if guidance_scale != 1.0:
+            # Conditional prediction (with text)
+            predicted_logits_cond = self.unets[size](x, time_embed, text_proj)
+            
+            # Unconditional prediction (without text - zero embedding)
+            text_proj_uncond = torch.zeros_like(text_proj)
+            predicted_logits_uncond = self.unets[size](x, time_embed, text_proj_uncond)
+            
+            # CFG: interpolate logits before softmax
+            predicted_logits = predicted_logits_uncond + guidance_scale * (predicted_logits_cond - predicted_logits_uncond)
+        else:
+            # No guidance: just conditional
+            predicted_logits = self.unets[size](x, time_embed, text_proj)
 
         # Estimate x_0 distribution
         x_0_pred = F.softmax(predicted_logits, dim=1)
@@ -466,16 +484,18 @@ class DiscreteDiscreteDiffusionModel3D(nn.Module):
         text_embed: torch.Tensor,
         size: str,
         num_samples: int = 1,
-        sampling_steps: Optional[int] = None
+        sampling_steps: Optional[int] = None,
+        guidance_scale: float = 1.0
     ) -> torch.Tensor:
         """
-        Generate samples using reverse diffusion
+        Generate samples using reverse diffusion with Classifier-Free Guidance
         
         Args:
             text_embed: Text embeddings (B, text_embed_dim)
             size: Size category
             num_samples: Number of samples
             sampling_steps: Number of steps (None = all timesteps)
+            guidance_scale: CFG strength (1.0 = no guidance, 3.0-7.0 typical for strong prompt following)
         
         Returns:
             Generated one-hot voxels (B, C, D, H, W)
@@ -501,9 +521,9 @@ class DiscreteDiscreteDiffusionModel3D(nn.Module):
                 self.num_timesteps - 1, 0, sampling_steps, dtype=torch.long, device=device
             ).tolist()
         
-        # Iterative denoising
+        # Iterative denoising with CFG
         for t in timesteps:
             t_batch = torch.full((num_samples,), t, device=device, dtype=torch.long)
-            x = self.p_sample(x, t_batch, text_embed, text_proj, size)
+            x = self.p_sample(x, t_batch, text_embed, text_proj, size, guidance_scale=guidance_scale)
         
         return x
